@@ -1,20 +1,20 @@
+
 require("dotenv").config({ path: "./.env" });
 const express = require('express');
 const app = express();
 const logger = require('morgan');
 const cookieParser = require('cookie-parser');
-const usersRoutes = require("./routes/userRoutes")
-const adminRoutes = require("./routes/adminRoutes")
+const usersRoutes = require("./routes/userRoutes");
+const adminRoutes = require("./routes/adminRoutes");
 const productRoutes = require("./routes/productRoutes");
+const cors = require("cors");
 
-
-const cors = require("cors")
-
-// setting up a database connection
+// Set up a database connection
 require("./config/db.config").DbConnection();
 
-// used for connect backend and frontend blacklist urls
-app.use(cors())
+// CORS middleware
+app.use(cors()); // Adjust CORS options if needed
+
 // Logger middleware
 app.use(logger('tiny'));
 
@@ -25,25 +25,22 @@ app.use(express.urlencoded({ extended: true }));
 // Cookie parser
 app.use(cookieParser());
 
-
-// base uri for user routes
+// Base URI for user routes
 app.use(`/Ecommerce/users/user`, usersRoutes);
 
-// base uri for Admin routes
+// Base URI for admin routes
 app.use("/Ecommerce/admins/admin", adminRoutes);
 
-// base uri for Product routes
+// Base URI for product routes
 app.use('/Ecommerce/products', productRoutes);
-
 
 // Catch-all route for unknown paths
 app.all('*', (req, res) => {
     res.status(404).json({ success: false, message: `${req.url} not found` });
 });
 
-
 // Start server
-const PORT = process.env.PORT
-app.listen(process.env.PORT, () => {
-    console.log(`server started running on port ${process.env.PORT}`);
-})
+const PORT = process.env.PORT || 8080; // Default to 8080 if PORT is not defined
+app.listen(PORT, () => {
+    console.log(`Server started running on port ${PORT}`);
+});
