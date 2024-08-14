@@ -220,6 +220,7 @@ exports.forgotPassword = async (req, res) => {
                     <p><a href="${resetLink}" style="color: #007bff; text-decoration: none; font-weight: bold;">Reset your password</a></p>
                     <p>This link will expire in 2 minutes. If you did not request this change, please ignore this email.</p>
                     <p>Best regards,<br>Apnamart Support Team</p>
+                    <a>${resetLink}</a>
                 </body>
                 </html>
             `
@@ -240,7 +241,7 @@ exports.forgotPassword = async (req, res) => {
 
 
 exports.updatePassword = async (req, res) => {
-    const { token } = req.params;
+    const { token } = req.body.token;
     const { password, confirmPassword } = req.body;
 
     try {

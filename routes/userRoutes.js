@@ -20,7 +20,7 @@ router.get("/logout",UserIsLoggedIn , logoutaccount)
 router.post('/forgotpassword',  forgotPassword);
 
 // /updatepassword/token
-router.put('/updatepassword/:token', updatePassword);
+router.put('/updatepassword', updatePassword);
 
 // /resetpassword
 router.put("/resetpassword", UserIsLoggedIn, changePassword);
