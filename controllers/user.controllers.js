@@ -192,7 +192,8 @@ exports.forgotPassword = async (req, res) => {
 
         // Generate reset token and expiration
         const token = crypto.randomBytes(32).toString('hex');
-        const expireDate = Date.now() + 2 * 60 * 1000; // 2 minutes from now
+        const expireDate = Date.now() + 5 * 60 * 1000; // 5 minutes from now
+
 
         // Save reset token and expiration to user record
         user.resetPasswordToken = token;
@@ -206,7 +207,7 @@ exports.forgotPassword = async (req, res) => {
         const mailOptions = {
             from: process.env.EMAIL_USER,
             to: email,
-            subject: 'Password Reset Request',
+            subject: 'Password Reset',
             html: `
                 <!DOCTYPE html>
                 <html>
@@ -218,7 +219,7 @@ exports.forgotPassword = async (req, res) => {
                     <p>Dear User,</p>
                     <p>We received a request to reset your Apnamart password. Please click the link below to reset your password:</p>
                     <p><a href="${resetLink}" style="color: #007bff; text-decoration: none; font-weight: bold;">Reset your password</a></p>
-                    <p>This link will expire in 2 minutes. If you did not request this change, please ignore this email.</p>
+                    <p>This link will expire in 5 minutes. If you did not request this change, please ignore this email.</p>
                     <p>Best regards,<br>Apnamart Support Team</p>
                     <a>${resetLink}</a>
                 </body>
@@ -241,8 +242,13 @@ exports.forgotPassword = async (req, res) => {
 
 
 exports.updatePassword = async (req, res) => {
+<<<<<<< HEAD
     const { token } = req.body.token;
     const { password, confirmPassword } = req.body;
+=======
+    
+    const { password, confirmPassword, token } = req.body;
+>>>>>>> 8a5ed25b325d7d01359f35cf033230f4f3294ee8
 
     try {
         if(! token){
@@ -286,7 +292,7 @@ exports.changePassword = async (req, res) => {
     if (!currentPassword || !newPassword || !confirmPassword) {
         return res.status(400).json({ success: false, message: 'All fields are required.' });
     }
-
+   
     if (newPassword !== confirmPassword) {
         return res.status(400).json({ success: false, message: 'New passwords do not match.' });
     }
@@ -318,7 +324,7 @@ exports.changePassword = async (req, res) => {
         if (!res.headersSent) {
             return res.status(500).json({ success: false, message: 'An error occurred. Please try again later.' });
         }
-    }
+    }-
 };
 
 

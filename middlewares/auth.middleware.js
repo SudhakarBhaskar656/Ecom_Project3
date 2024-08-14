@@ -26,7 +26,7 @@ exports.UserIsLoggedIn = (req, res, next) => {
 // Middleware to check if admin is logged in
 exports.AdminIsLoggedIn = (req, res, next) => {
     // Check for token in query, cookies, body, or authorization header
-    const token = req.query.token || req.cookies.token || req.body.token || req.headers['authorization']?.split(' ')[1];
+    const token = req.query.token || req.cookies.token || req.body.token ;
 
     if (!token) {
         return res.status(401).json({ success: false, message: "You don't have a token. Please sign in to continue." });

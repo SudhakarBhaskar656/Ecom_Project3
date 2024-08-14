@@ -25,5 +25,4 @@ router.put('/updatepassword', updatePassword);
 // /resetpassword
 router.put("/resetpassword", UserIsLoggedIn, changePassword);
 
-
 module.exports = router;
