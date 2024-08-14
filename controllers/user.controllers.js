@@ -200,7 +200,7 @@ exports.forgotPassword = async (req, res) => {
         await user.save();
 
         // Construct reset link
-        const resetLink = `http://localhost:8080/Ecommerce/users/user/updatepassword/${token}`;
+        const resetLink = `http://localhost:5173/updatepassword/${token}`; // Make sure this URL is correct
 
         // Set up email options
         const mailOptions = {
@@ -211,7 +211,7 @@ exports.forgotPassword = async (req, res) => {
                 <html>
                 <body>
                     <p>Dear User,</p>
-                    <p>We received a request to reset your Apnamart password,please click the link below to reset your password:</p>
+                    <p>We received a request to reset your Apnamart password. Please click the link below to reset your password:</p>
                     <p><a href="${resetLink}" style="color: #007bff; font-weight: bold;">Reset your password</a></p>
                     <p>This link will expire in 2 minutes. If you did not request this change, please ignore this email.</p>
                     <p>Best regards,<br>Apnamart Support Team</p>
@@ -239,6 +239,10 @@ exports.updatePassword = async (req, res) => {
     const { password, confirmPassword } = req.body;
 
     try {
+        if(! token){
+            return res.status(401).json({success: false, message: 'PLease provide valid token'})
+            
+        }
         // Check if passwords match
         if (password !== confirmPassword) {
             return res.status(400).json({ success: false, message: 'Passwords do not match.' });
