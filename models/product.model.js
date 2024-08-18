@@ -27,7 +27,7 @@ const productSchema = new Schema({
         type: String,
         required: true,
         enum: {
-            values: ['electronics', 'clothing', 'home', 'beauty', 'sports', 'toys', 'footwear', 'cosmetics'],
+            values: ['electronics', 'clothing', 'home', 'sports', 'kids', 'footwear', 'cosmetics', 'mens', 'womens'],
             message: 'Category is not valid'
         }
     },

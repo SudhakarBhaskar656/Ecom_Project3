@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { addProduct, totalproducts, singleproduct, updateproduct, deleteproduct } = require('../controllers/product.controllers');
+const { addProduct, totalproducts, singleproduct, updateproduct, deleteproduct, productByCategory } = require('../controllers/product.controllers');
 const { AdminIsLoggedIn } = require('../middlewares/auth.middleware');
 
 // /add
@@ -17,5 +17,8 @@ router.put("/product/update/:id", AdminIsLoggedIn, updateproduct);
 
 // /product/delete/:id
 router.delete("/product/delete/:id",AdminIsLoggedIn, deleteproduct);
+
+///category
+router.get("/category", AdminIsLoggedIn,  productByCategory);
 
 module.exports = router
