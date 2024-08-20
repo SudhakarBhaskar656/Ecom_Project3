@@ -157,6 +157,66 @@ exports.singleproduct = async (req, res, next) => {
 
 
 
+exports.updateproduct = async (req, res, next) => {
+    // Function to format numbers with commas
+    const numberWithCommas = (number) => {
+        return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    };
+
+    try {
+        // Extract product ID from request parameters
+        const productId = req.params.id || req.query.productId;
+        const updates = req.body;
+
+        // Check if the product ID is valid and provided
+        if (!productId) {
+            return res.status(400).json({ success: false, message: "Product ID is required" });
+        }
+
+        // Validate and sanitize fields if provided
+        if (updates.price) {
+            updates.price = parseFloat(updates.price.replace(/,/g, ''));
+            if (isNaN(updates.price) || updates.price < 0) {
+                return res.status(400).json({ success: false, message: "Invalid price value" });
+            }
+        }
+
+        if (updates.discount) {
+            updates.discount = parseFloat(updates.discount);
+            if (isNaN(updates.discount) || updates.discount < 0 || updates.discount > 100) {
+                return res.status(400).json({ success: false, message: "Discount must be between 0 and 100" });
+            }
+        }
+
+        // Update the product
+        const updatedProduct = await productModel.findByIdAndUpdate(productId, updates, {
+            new: true,
+            runValidators: true
+        }).exec();
+
+        // Check if the product was found and updated
+        if (!updatedProduct) {
+            return res.status(404).json({ success: false, message: "Product not found" });
+        }
+
+        // Format prices with commas if they were updated
+        const formattedProduct = {
+            ...updatedProduct.toObject(),
+            price: numberWithCommas(updatedProduct.price),
+            priceAfterDiscount: updatedProduct.priceAfterDiscount ? numberWithCommas(updatedProduct.priceAfterDiscount) : undefined
+        };
+
+        // Send the response
+        res.status(200).json({
+            success: true,
+            product: formattedProduct
+        });
+
+    } catch (error) {
+        console.error('Error updating product:', error);
+        res.status(500).json({ success: false, message: "Internal Server Error" });
+    }
+};
 
 exports.deleteproduct = async (req, res, next) => {
     try {
@@ -272,17 +332,24 @@ exports.updateProduct = async (req, res, next) => {
 
 exports.productByCategory = async (req, res, next) => {
     try {
+
         const category = req.query.category || req.params.category ?.toLowerCase();
+        
         if (!category) {
             return res.status(400).json({ success: false, message: 'Category is required' });
         }
         
-        const products = await productModel.find({ category });
+        // Find products by category, ensuring that category matches exactly
+        const products = await productModel.find({ category: category });
+
+
         if (products.length === 0) {
+            console.log('Category:', category); // Debugging
             return res.status(404).json({ success: false, message: 'No products found for this category' });
         }
         res.status(200).json({ success: true, products });
     } catch (error) {
+        console.error('Error fetching products:', error); // Debugging
         res.status(error.status || 500).json({ success: false, message: error.message });
     }
 };
