@@ -7,6 +7,7 @@ const cookieParser = require('cookie-parser');
 const usersRoutes = require("./routes/userRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const productRoutes = require("./routes/productRoutes");
+const cartRoutes = require("./routes/cartRoutes");
 const cors = require("cors");
 
 // Set up a database connection
@@ -33,6 +34,9 @@ app.use("/Ecommerce/admins/admin", adminRoutes);
 
 // Base URI for product routes
 app.use('/Ecommerce/products', productRoutes);
+
+// Base URI for cart routes
+app.use('/Ecommerce/users/user/cart', cartRoutes);
 
 // Catch-all route for unknown paths
 app.all('*', (req, res) => {

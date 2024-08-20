@@ -41,7 +41,8 @@ const productSchema = new Schema({
         type: Number,
         min: [0, 'Discount must be between 0 and 100'],
         max: [100, 'Discount must be between 0 and 100']
-    }
+    },
+
 }, { timestamps: true });
 
 // Pre-save hook to normalize the category to lowercase and calculate price after discount
