@@ -27,22 +27,22 @@ const cartSchema = new Schema({
         },
         city: {
             type: String,
-            required: true,
+            // required: true,
             trim: true
         },
         state: {
             type: String,
-            required: true,
+            // required: true,
             trim: true
         },
         postalCode: {
             type: String,
-            required: true,
+            // required: true,
             trim: true,
         },
         country: {
             type: String,
-            required: true,
+            // required: true,
             trim: true
         }
     }

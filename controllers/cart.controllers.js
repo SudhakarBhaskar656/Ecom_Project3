@@ -51,15 +51,13 @@ exports.addToCart = async (req, res, next) => {
 
 
 
-
-
 exports.removeFromCart = async (req, res, next) => {
 
     try {
         console.log(req.user.userid)
         const userId = req.user.userid; // Assuming user is authenticated and req.user.userid is available
         const productId = req.query.productId || req.body.productId; // Extract productId from query string
-
+         
         if (!productId) {
             return res.status(400).json({ success: false, message: 'Product ID is required' });
         }
@@ -95,18 +93,42 @@ exports.removeFromCart = async (req, res, next) => {
 };
 
 
-exports.viewCart = async (req, res, next)=>{
+
+
+exports.viewCart = async (req, res, next) => {
     try {
-         const loginuser = await userModel.findOne({email : req.user.email}).populate("mycart");
-         if(! loginuser) {
-            return res.status(401).json({success : false, message : "Login user not found"})
-         }
-         res.status(200).json({success :false , loginuser});
-         
+        // Find the user and populate the mycart field
+        const loginuser = await userModel.findOne({ email: req.user.email }).populate("mycart");
+
+        // Check if user was found
+        if (!loginuser) {
+            return res.status(401).json({ success: false, message: "Login user not found" });
+        }
+
+        // Get the cart items (optional, if you need to include cart items in the response)
+        const cartItems = loginuser.mycart;
+
+        // Function to get random items from the product model
+        const getRandomProducts = async (count) => {
+            const allProducts = await productModel.find(); // Fetch all products
+            const shuffled = allProducts.sort(() => 0.5 - Math.random()); // Shuffle the products
+            return shuffled.slice(0, count); // Get the first `count` products
+        };
+
+        // Get up to 20 random products
+        const randomProducts = await getRandomProducts(20);
+
+        // Respond with user data and random products
+        res.status(200).json({
+            success: true,
+            user: loginuser,
+            randomProducts: randomProducts
+        });
+
     } catch (error) {
-         res.status(error.status).json({success : false , message : error.message})
+        res.status(500).json({ success: false, message: error.message });
     }
-}
+};
 
 
 
