@@ -24,6 +24,8 @@ router.get("/category",  productByCategory);
 
 // /searchproducts
 router.get("/searchproducts", searchProducts);
+//filter products
+router.get("/filterproducts",  sortProducts)
 
 
 router.get("/filterproducts",  sortProducts)

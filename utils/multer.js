@@ -5,7 +5,8 @@ const path = require('path');
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     // Set destination folder for file uploads
-    cb(null, '../uploads/multer');
+
+    cb(null, '../uploads/multer')
   },
   filename: (req, file, cb) => {
     // Set filename with original name and timestamp
@@ -17,7 +18,8 @@ const storage = multer.diskStorage({
 const fileFilter = (req, file, cb) => {
   // Allowed file types
   const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
-  
+
+
   if (allowedTypes.includes(file.mimetype)) {
     cb(null, true); // Accept file
   } else {
