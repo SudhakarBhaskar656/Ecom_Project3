@@ -102,10 +102,6 @@ exports.totalproducts = async (req, res, next) => {
 
 
 
-<<<<<<< HEAD
-=======
-
->>>>>>> 6dc25e764217124d5364a38403f35175b6a0b958
 exports.singleproduct = async (req, res, next) => {
     // Function to format numbers with commas
     const numberWithCommas = (number) => {
@@ -375,10 +371,6 @@ exports.productByCategory = async (req, res, next) => {
     }
 };
 
-<<<<<<< HEAD
-
-=======
->>>>>>> 6dc25e764217124d5364a38403f35175b6a0b958
 exports.searchProducts = async (req, res, next) => {
     try {
         const { query } = req.query; // Retrieve the search query from the request
@@ -412,7 +404,7 @@ exports.searchProducts = async (req, res, next) => {
         console.error('Error in searchProducts:', error);
         res.status(500).json({ success: false, message: 'Server error' });
     }
-<<<<<<< HEAD
+
 }
 
 
@@ -432,13 +424,4 @@ exports.sortProducts =   async (req, res, next) => {
 }
     
 
-=======
 
-
-
-
-};
-
-
-
->>>>>>> 6dc25e764217124d5364a38403f35175b6a0b958
