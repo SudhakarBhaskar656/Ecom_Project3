@@ -3,10 +3,12 @@ const productModel = require('../models/product.model');
 const userModel = require('../models/user.model');
 
 
+
+
 exports.addToCart = async (req, res, next) => {
     try {
         const userId = req.user.userid; // Assuming user is authenticated and req.user.userid is available
-        const { productId } = req.body;
+        const { productId } = req.body || req.query.id;
 
         // Check if the product ID is provided
         if (!productId) {
@@ -94,7 +96,6 @@ exports.removeFromCart = async (req, res, next) => {
 
 
 
-
 exports.viewCart = async (req, res, next) => {
     try {
         // Find the user and populate the mycart field
@@ -112,7 +113,8 @@ exports.viewCart = async (req, res, next) => {
         const getRandomProducts = async (count) => {
             const allProducts = await productModel.find(); // Fetch all products
             const shuffled = allProducts.sort(() => 0.5 - Math.random()); // Shuffle the products
-            return shuffled.slice(0, count); // Get the first `count` products
+
+            return shuffled.slice(0, count); // Get the first count products
         };
 
         // Get up to 20 random products
@@ -121,6 +123,7 @@ exports.viewCart = async (req, res, next) => {
         // Respond with user data and random products
         res.status(200).json({
             success: true,
+            carts: loginuser.mycart,
             user: loginuser,
             randomProducts: randomProducts
         });
@@ -129,7 +132,6 @@ exports.viewCart = async (req, res, next) => {
         res.status(500).json({ success: false, message: error.message });
     }
 };
-
 
 
 

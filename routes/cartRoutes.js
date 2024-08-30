@@ -9,8 +9,12 @@ router.post("/add", UserIsLoggedIn, addToCart);
 // /remove
 router.put("/remove", UserIsLoggedIn, removeFromCart);
 
-///view
-router.get("/view",UserIsLoggedIn, viewCart )
+
+// /cart/view
+router.get("/view", UserIsLoggedIn, viewCart )
+
+
+
 
 
 module.exports = router

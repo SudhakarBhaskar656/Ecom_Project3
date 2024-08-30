@@ -1,5 +1,6 @@
 require("dotenv").config();
 const productModel = require("../models/product.model");
+const upload = require('../utils/multer');
 
 
 
@@ -7,64 +8,61 @@ const numberWithCommas = (number) => {
     return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 }
 
-exports.addProduct = async (req, res, next) => {
+exports.uploadImages = upload.array('images',5);
+
+exports.addProduct = async (req, res) => {
     try {
-        const { name, description, price, category, stock, images, discount } = req.body;
-      
-        // Check if all required fields are present
-        if (!name || !description || !price || !category || !stock || !images || !discount) {
-            return res.status(400).json({ success: false, message: "Please fill in all product details" });
-        }
-
-        // Sanitize and validate price
-        let sanitizedPrice = parseFloat(price.replace(/,/g, '')); // Remove commas and convert to number
-        if (isNaN(sanitizedPrice) || sanitizedPrice < 0) {
-            return res.status(400).json({ success: false, message: "Price must be a valid number greater than or equal to 0" });
-        }
-
-        // Sanitize and validate discount
-        let numericDiscount = parseFloat(discount);
-        if (isNaN(numericDiscount) || numericDiscount < 0 || numericDiscount > 100) {
-            return res.status(400).json({ success: false, message: "Discount must be a number between 0 and 100" });
-        }
-
-        // Calculate the final price after discount
-        let finalPrice = sanitizedPrice;
-        if (numericDiscount > 0) {
-            finalPrice = sanitizedPrice - (sanitizedPrice * (numericDiscount / 100));
-        }
-
-        // Create a new product
-        const newProduct = await productModel.create({
-            name,
-            description,
-            price: sanitizedPrice,
-            priceAfterDiscount: finalPrice,
-            category,
-            stock,
-            images,
-            discount: numericDiscount
-        });
-
-        // Format numbers with commas
-        const formattedPrice = numberWithCommas(newProduct.price);
-        const formattedPriceAfterDiscount = numberWithCommas(newProduct.priceAfterDiscount);
-
-        // Return the response with formatted prices
-        res.status(200).json({
-            success: true,
-            newProduct: {
-                ...newProduct.toObject(),
-                price: formattedPrice,
-                priceAfterDiscount: formattedPriceAfterDiscount
-            }
-        });
-
+      const { name, description, price, category, stock, discount } = req.body;
+  
+      // Check if all required fields are present
+      if (!name || !description || !price || !category || !stock || !discount) {
+        return res.status(400).json({ success: false, message: "Please fill in all product details" });
+      }
+  
+      // Sanitize and validate price
+      let sanitizedPrice = parseFloat(price.replace(/,/g, '')); // Remove commas and convert to number
+      if (isNaN(sanitizedPrice) || sanitizedPrice < 0) {
+        return res.status(400).json({ success: false, message: "Price must be a valid number greater than or equal to 0" });
+      }
+  
+      // Sanitize and validate discount
+      let numericDiscount = parseFloat(discount);
+      if (isNaN(numericDiscount) || numericDiscount < 0 || numericDiscount > 100) {
+        return res.status(400).json({ success: false, message: "Discount must be a number between 0 and 100" });
+      }
+  
+      // Calculate the final price after discount
+      let finalPrice = sanitizedPrice;
+      if (numericDiscount > 0) {
+        finalPrice = sanitizedPrice - (sanitizedPrice * (numericDiscount / 100));
+      }
+  
+      // Collect image file paths from req.files
+      const images = req.files.map(file => file.filename);
+  
+      // Create a new product
+      const newProduct = await productModel.create({
+        name,
+        description,
+        price: sanitizedPrice,
+        priceAfterDiscount: finalPrice,
+        category,
+        stock,
+        images,
+        discount: numericDiscount,
+      });
+  
+      // Send the created product as JSON
+      res.status(201).json({
+        success: true,
+        newProduct
+      });
+  
     } catch (error) {
-        console.error('Error creating product:', error);
-        res.status(500).json({ success: false, message: "Internal Server Error" });
+      console.error('Error creating product:', error);
+      res.status(500).json({ success: false, message: "Internal Server Error" });
     }
-};
+  };
 
 
 
@@ -101,7 +99,6 @@ exports.totalproducts = async (req, res, next) => {
         res.status(500).json({ success: false, message: "Internal Server Error" });
     }
 };
-
 
 
 
@@ -175,9 +172,6 @@ exports.singleproduct = async (req, res, next) => {
         res.status(500).json({ success: false, message: "Internal Server Error" });
     }
 };
-
-
-
 
 
 
@@ -372,13 +366,10 @@ exports.productByCategory = async (req, res, next) => {
         }
         res.status(200).json({ success: true, products });
     } catch (error) {
-        console.error('Error fetching products:', error); // Debugging
+        console.error('No Products Found For this Category', error); // Debugging
         res.status(error.status || 500).json({ success: false, message: error.message });
     }
 };
-
-
-
 
 
 exports.searchProducts = async (req, res, next) => {
@@ -414,8 +405,22 @@ exports.searchProducts = async (req, res, next) => {
         console.error('Error in searchProducts:', error);
         res.status(500).json({ success: false, message: 'Server error' });
     }
+}
 
-};
 
 
+exports.sortProducts =   async (req, res, next) => {
+    try {
+        // Get sort order from query params ('asc' for min to max, 'desc' for max to min)
+        const sortOrder = req.query.sortOrder || 'asc'; // Default to 'asc' if not provided
+    
+        // Fetch and sort products by price
+        const products = await productModel.find().sort({ price: sortOrder });
+        // Respond with sorted products
+        res.status(200).json(products);
+      } catch (error) {
+        res.status(500).json({ message: 'Server error', error });
+      }
+}
+    
 
