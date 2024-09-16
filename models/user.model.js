@@ -9,6 +9,11 @@ const userSchema = new mongoose.Schema({
         unique: [true, "username must be unique"],
         minLength: [3, "username must be at least 3 characters"],
     },
+    profile : {
+         type : String,
+         default :  `default.jpg`
+    },
+
     email: {
         type: String,
         lowercase: true,
@@ -27,6 +32,14 @@ const userSchema = new mongoose.Schema({
     mycart :[{
         type : mongoose.Schema.Types.ObjectId,
         ref:'Product'
+    }],
+    wishlist: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Product'
+    }],
+    orders: [{
+        type : mongoose.Schema.Types.ObjectId,
+        ref : 'Order'
     }],
     resetPasswordToken: String,
     resetPasswordExpire: Date

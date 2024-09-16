@@ -7,7 +7,7 @@ const nodemailer  = require("nodemailer")
 const crypto = require("crypto");
 
 
-exports.adminregister = async (req, res) => {
+exports.adminRegister = async (req, res) => {
     try {
         const { username, email, password} = req.body;
 
@@ -39,14 +39,14 @@ exports.adminregister = async (req, res) => {
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'strict'
         });
-
+         
         res.status(200).json({ success: true, newUser, token });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
 };
 
-exports.adminlogin = async (req, res) => {
+exports.adminLogin = async (req, res) => {
     const { email, password } = req.body;
 
     if (!email || !password) {
@@ -155,7 +155,7 @@ exports.adminloginWithGoogle = async (req, res, next) => {
 
 
 
-exports.adminlogout = (req, res) => {
+exports.adminLogout = (req, res) => {
     res.clearCookie("token");
     res.status(200).json({ success: true, message: "Logout successful" });
 };
@@ -166,8 +166,6 @@ exports.admindashboard = async (req, res) => {
     const user = await userModel.findOne({ email: req.user.email });
     res.status(200).json({success:true, message : "Admin Dashboard successfully", user})
 }
-
-
 
 
 
@@ -316,3 +314,5 @@ exports.changePassword = async (req, res) => {
         }
     }
 };
+
+

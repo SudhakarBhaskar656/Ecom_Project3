@@ -1,20 +1,20 @@
 const express = require('express');
 const router = express.Router();
-const { adminregister, adminlogin, adminloginWithGoogle, adminlogout, admindashboard, forgotPassword, updatePassword, changePassword } = require('../controllers/admin.controllers');
-const {AdminIsLoggedIn} = require("../middlewares/auth.middleware")
+const {AdminIsLoggedIn} = require("../middlewares/auth.middleware");
+const { adminRegister, adminLogin, adminloginWithGoogle, adminLogout, admindashboard, forgotPassword, updatePassword, changePassword } = require('../controllers/admin.controllers');
 
 
 // /register
-router.post("/register",   adminregister)
+router.post("/register",   adminRegister)
 
 // /login
-router.post("/login", adminlogin)
+router.post("/login", adminLogin)
 
 // /google/login
 router.post("/google/login", adminloginWithGoogle)
 
 //  /logout
-router.get("/logout",AdminIsLoggedIn, adminlogout)
+router.get("/logout",AdminIsLoggedIn, adminLogout)
 
 // /dashboard
 router.get('/dashboard', AdminIsLoggedIn, admindashboard);

@@ -9,7 +9,6 @@ router.post("/add", UserIsLoggedIn, addToCart);
 // /remove
 router.put("/remove", UserIsLoggedIn, removeFromCart);
 
-
 // /cart/view
 router.get("/view", UserIsLoggedIn, viewCart )
 

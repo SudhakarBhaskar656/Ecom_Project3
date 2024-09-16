@@ -27,7 +27,7 @@ const productSchema = new Schema({
         type: String,
         required: true,
         enum: {
-            values: ['electronics', 'clothing', 'home', 'sports', 'kids', 'footwear', 'cosmetics', 'mens', 'womens'],
+            values: ['electronics', 'clothing', 'home', 'sports', 'kids', 'footwear', 'cosmetics', 'mens', 'womens','flights & hotels','Nutrition & more'],
             message: 'Category is not valid'
         }
     },
@@ -42,6 +42,10 @@ const productSchema = new Schema({
         min: [0, 'Discount must be between 0 and 100'],
         max: [100, 'Discount must be between 0 and 100']
     },
+    reviews: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Review'
+      }],
 
 }, { timestamps: true });
 
