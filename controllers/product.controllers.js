@@ -165,7 +165,6 @@ exports.totalProducts = async (req, res, next) => {
     res.status(200).json(response);
   } catch (error) {
     // Log the error and return a server error response
-    console.error('Error in totalProducts:', error);
     res.status(500).json({
       success: false,
       message: 'An error occurred while fetching products.',
@@ -213,9 +212,6 @@ exports.productByCategory = async (req, res, next) => {
     // Define the category filter
     const categoryFilter = { category: category };
 
-    // Log the filter and pagination parameters for debugging
-    console.log('Category Filter:', categoryFilter);
-    console.log('Pagination - Page:', pageNumber, 'Limit:', limitNumber, 'Skip:', skip);
 
     // Use aggregation for optimized data retrieval
     const [categoryData] = await productModel.aggregate([
@@ -244,8 +240,7 @@ exports.productByCategory = async (req, res, next) => {
       }
     ]);
 
-    // Log the result of the aggregation query for debugging
-    console.log('Category Data:', JSON.stringify(categoryData, null, 2));
+
 
     // Extract products and total count from the aggregation result
     const products = categoryData?.products || [];
@@ -284,8 +279,7 @@ exports.productByCategory = async (req, res, next) => {
     // Send the response with products and pagination details
     res.status(200).json(response);
   } catch (error) {
-    // Log the error and return a server error response
-    console.error('Error in productByCategory:', error);
+    // Log the error and return a server error respons
     res.status(500).json({
       success: false,
       message: 'An error occurred while fetching products by category.',
@@ -475,7 +469,6 @@ exports.singleProduct = async (req, res, next) => {
         res.status(200).json(response);
 
     } catch (error) {
-        console.error('Error fetching product:', error);
         res.status(500).json({ success: false, message: "Internal Server Error" });
     }
 };
@@ -543,7 +536,6 @@ exports.updateProduct = async (req, res) => {
     res.status(200).json({ success: true, product: formattedProduct });
 
   } catch (error) {
-    console.error('Error updating product:', error);
     const errorMessage = error.name === 'ValidationError' ? error.message : "Internal Server Error";
     const statusCode = error.kind === 'ObjectId' ? 400 : 500;
     res.status(statusCode).json({ success: false, message: errorMessage });
@@ -573,7 +565,6 @@ exports.deleteProduct = async (req, res, next) => {
         });
 
     } catch (error) {
-        console.error('Error deleting product:', error);
         res.status(500).json({ success: false, message: "Internal Server Error" });
     }
 };
@@ -624,7 +615,6 @@ exports.searchProducts = async (req, res, next) => {
     // Send the response with found products
     res.status(200).json(response);
   } catch (error) {
-    console.error('Error in searchProducts:', error);
     res.status(500).json({ success: false, message: 'Server error' });
   }
 };
@@ -676,7 +666,6 @@ exports.searchProducts = async (req, res, next) => {
         review
       });
     } catch (error) {
-      console.error('Error adding review:', error);
       res.status(500).json({ success: false, message: "Internal Server Error" });
     }
   };
@@ -723,7 +712,6 @@ exports.searchProducts = async (req, res, next) => {
       // Return the reviews
       res.status(200).json(response);
     } catch (error) {
-      console.error('Error fetching product reviews:', error);
       res.status(500).json({ success: false, message: "Internal Server Error" });
     }
   };

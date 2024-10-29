@@ -255,7 +255,7 @@ exports.updatePassword = async (req, res) => {
 
         res.status(200).json({ success: true, message: 'Password updated successfully.' });
     } catch (error) {
-        console.error('Error in updatePassword controller:', error);
+
         res.status(500).json({ success: false, message: 'An error occurred. Please try again later.' });
     }
 };

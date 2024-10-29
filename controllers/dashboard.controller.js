@@ -52,7 +52,8 @@ exports.TotalOrders = async (req, res, next) => {
                 userMap[userId].totalOrders += 1;
                 userMap[userId].totalSpent += order.totalAmount;
             } else {
-                console.warn(`Order ${order._id} has no associated user.`);
+
+                res.json({ warning: 'Order ${order._id} has no associated user'})
             }
         });
 
@@ -70,7 +71,7 @@ exports.TotalOrders = async (req, res, next) => {
         // Send response
         res.status(200).json({ success: true, data: responseData });
     } catch (error) {
-        console.error('Error fetching total orders:', error); // Log the error for debugging
+
         res.status(error.status || 500).json({ success: false, message: error.message });
     }
 };

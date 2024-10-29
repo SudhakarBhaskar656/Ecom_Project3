@@ -354,7 +354,6 @@ exports.checkout = async (req, res) => {
         addresses: user.addresses, // List of saved addresses
       });
     } catch (error) {
-      console.error('Error during checkout:', error);
       res.status(500).json({ success: false, message: "Internal server error", error: error.message });
     }
   };

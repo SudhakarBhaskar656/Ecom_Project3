@@ -5,10 +5,10 @@ exports.DbConnection = async(req, res, err) => {
 
     await mongoose.connect(uri)
         .then(function() {
-            console.log("DB connected successfully.");
+           res.json({success: true, message : "connection established"})
         })
         .catch(function(error) {
-            console.log("There was an Error while connecting to a database.", error);
+            res.json({success: false, message: error.message});
         });
 
 }

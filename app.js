@@ -12,6 +12,7 @@ const wishlistRoutes =  require("./routes/wishlistRoutes");
 const orderRoutes = require("./routes/orderRoutes")
 const dashboardRoutes = require("./routes/dashboardRoutes")
 const cors = require("cors");
+const helmet = require("helmet")
 
 
 // Set up a database connection
@@ -22,6 +23,9 @@ app.use(cors());
 
 // Logger middleware
 app.use(logger('tiny'));
+
+//secure http headers
+app.use(helmet());
 
 // Body parsers
 app.use(express.json());

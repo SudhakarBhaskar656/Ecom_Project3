@@ -95,7 +95,7 @@ exports.userWishlist = async (req, res) => {
         // Send the response with the user's wishlist
         res.status(200).json(response);
     } catch (error) {
-        console.error('Error in userWishlist:', error);
+
         res.status(500).json({ message: "Server error", error: error.message });
     }
 };
