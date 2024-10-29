@@ -10,14 +10,15 @@ const productRoutes = require("./routes/productRoutes");
 const cartRoutes = require("./routes/cartRoutes");
 const wishlistRoutes =  require("./routes/wishlistRoutes");
 const orderRoutes = require("./routes/orderRoutes")
+const dashboardRoutes = require("./routes/dashboardRoutes")
 const cors = require("cors");
 
 
 // Set up a database connection
 require("./config/db.config").DbConnection();
 
-// CORS middleware
-app.use(cors()); // Adjust CORS options if needed
+// CORS middleware for apis access.
+app.use(cors()); 
 
 // Logger middleware
 app.use(logger('tiny'));
@@ -47,13 +48,16 @@ app.use("/Ecommerce/user/wishlist", wishlistRoutes)
 // Base URI for order routes
 app.use("/Ecommerce/order", orderRoutes)
 
+// Base URI for dashboard routes
+app.use("/Ecommerce/dashboard", dashboardRoutes)
+
 // Catch-all route for unknown paths
 app.all('*', (req, res) => {
     res.status(404).json({ success: false, message: `${req.url} not found` });
 });
 
 // Start server
-const PORT = process.env.PORT || 8080; // Default to 8080 if PORT is not defined
+const PORT = process.env.PORT || 8080; 
 app.listen(PORT, () => {
     console.log(`Server started running on port ${PORT}`);
 });

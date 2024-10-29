@@ -1,10 +1,7 @@
 const jwt = require('jsonwebtoken');
 const { config } = require('dotenv');
-
-
-config();
-
 const secretKey = process.env.JWT_SECRET_KEY;
+config();
 
 // Middleware to check if user is logged in
 exports.UserIsLoggedIn = (req, res, next) => {
@@ -20,7 +17,6 @@ exports.UserIsLoggedIn = (req, res, next) => {
         req.user = data;
         next();
     } catch (err) {
-        console.error('Token verification error:', err);
         return res.status(401).json({ success: false, message: "Invalid token. Please sign in again." });
     }
 }
@@ -39,7 +35,6 @@ exports.AdminIsLoggedIn = (req, res, next) => {
         req.user = data;
         next();
     } catch (err) {
-        console.error('Token verification error:', err);
         return res.status(401).json({ success: false, message: "Invalid token. Please sign in again." });
     }
 }

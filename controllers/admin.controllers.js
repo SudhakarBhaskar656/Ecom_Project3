@@ -6,7 +6,7 @@ const secretKey = process.env.JWT_SECRET_KEY;
 const nodemailer  = require("nodemailer")
 const crypto = require("crypto");
 
-
+// regitser account 
 exports.adminRegister = async (req, res) => {
     try {
         const { username, email, password} = req.body;
@@ -20,7 +20,9 @@ exports.adminRegister = async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, salt);
 
         if (!secretKey) {
-            throw new Error('JWT_SECRET_KEY environment variable is not set');
+            // throw new Error('JWT_SECRET_KEY environment variable is not set');
+            return res.status(403).json({ success: false, message:  "Invalid  jwt secret key" });
+
         }
 
         const newUser = await userModel.create({
@@ -46,6 +48,7 @@ exports.adminRegister = async (req, res) => {
     }
 };
 
+// login with email and password
 exports.adminLogin = async (req, res) => {
     const { email, password } = req.body;
 
@@ -78,10 +81,7 @@ exports.adminLogin = async (req, res) => {
     }
 };
 
-
-
-
-
+// login with google authorization
 exports.adminloginWithGoogle = async (req, res, next) => {
     try {
         const { username, email } = req.body;
@@ -148,26 +148,19 @@ exports.adminloginWithGoogle = async (req, res, next) => {
         }
 
     } catch (error) {
-        console.error(error);
-        return res.status(500).json({ success: false, message: "Internal server error" });
+        return res.status(500).json({ success: false, message: error.message });
     }
 }
 
-
-
+// admin logout
 exports.adminLogout = (req, res) => {
+  try {
     res.clearCookie("token");
     res.status(200).json({ success: true, message: "Logout successful" });
+  } catch (error) {
+     res.status(error.status).json({success:false, message : error.message})
+  }
 };
-
-
-
-exports.admindashboard = async (req, res) => {
-    const user = await userModel.findOne({ email: req.user.email });
-    res.status(200).json({success:true, message : "Admin Dashboard successfully", user})
-}
-
-
 
 const transporter = nodemailer.createTransport({
     service: 'Gmail',
@@ -177,8 +170,7 @@ const transporter = nodemailer.createTransport({
     }
 });
 
-
-
+// admin forgot password send link 
 exports.forgotPassword = async (req, res) => {
     const { email } = req.body;
 
@@ -204,8 +196,8 @@ exports.forgotPassword = async (req, res) => {
         await user.save();
 
         // Construct reset link
-        const resetLink = `http://localhost:5173/updatepassword/${token}`;
-        
+        // const resetLink = `http://localhost:5173/updatepassword/${token}`;
+        const resetLink = `${req.protocol}://${req.get('host')}/updatepassword/${token}`;
         // Set up email options
         const mailOptions = {
             from: process.env.EMAIL_USER,
@@ -228,16 +220,13 @@ exports.forgotPassword = async (req, res) => {
         await transporter.sendMail(mailOptions);
         return res.status(200).json({ success: true, message: 'Password reset link sent to your email.' });
     } catch (error) {
-        console.error('Error in forgotPassword controller:', error.message);
-        // Ensure only one response is sent
         if (!res.headersSent) {
             return res.status(500).json({ success: false, message: 'An error occurred. Please try again later.' });
         }
     }
 };
 
-
-
+//
 exports.updatePassword = async (req, res) => {
 
     const { password, confirmPassword, token } = req.body;
@@ -271,8 +260,7 @@ exports.updatePassword = async (req, res) => {
     }
 };
 
-
-
+// change password for admin user account
 exports.changePassword = async (req, res) => {
     const { currentPassword, newPassword, confirmPassword } = req.body;
     const userId = req.user.userid; // Assuming user ID is attached to req.user
@@ -305,13 +293,11 @@ exports.changePassword = async (req, res) => {
         return res.status(200).json({ success: true, message: 'Password updated successfully.' });
 
     } catch (error) {
-        // Log the error details
-        console.error('Error in changePassword controller:', error.message);
-
         // Check if headers have already been sent
         if (!res.headersSent) {
             return res.status(500).json({ success: false, message: 'An error occurred. Please try again later.' });
         }
+        res.status(500).json({ success: false, message: error.message });
     }
 };
 

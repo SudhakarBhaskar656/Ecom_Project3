@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
+const shortid = require("shortid")
 
 const productSchema = new Schema({
     name: {
@@ -27,7 +28,7 @@ const productSchema = new Schema({
         type: String,
         required: true,
         enum: {
-            values: ['electronics', 'clothing', 'home', 'sports', 'kids', 'footwear', 'cosmetics', 'mens', 'womens','flights & hotels','Nutrition & more'],
+            values: ['electronics', 'clothing', 'home', 'sports', 'kids', 'footwear', 'cosmetics', 'mens', 'womens'],
             message: 'Category is not valid'
         }
     },
@@ -46,6 +47,11 @@ const productSchema = new Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Review'
       }],
+      shareId :{
+        type :String,
+        default : shortid.generate,
+        unique:true
+      }
 
 }, { timestamps: true });
 

@@ -1,41 +1,69 @@
 
 const express = require('express');
-const { registeraccount, loginaccount, logoutaccount, adminaccount, loginWithGoogle, forgotPassword, updatePassword, changePassword, currentUser, getUserProfile, checkout, editProfileImage } = require('../controllers/user.controllers');
+const { registeraccount, loginaccount, logoutaccount, loginWithGoogle, forgotPassword, updatePassword, changePassword, currentUser, getUserProfile, updateDetails, editProfile, checkout, addAddress, subscribe, contactUs } = require('../controllers/user.controllers');
 const { UserIsLoggedIn } = require('../middlewares/auth.middleware');
 const upload = require("../utils/multer");
 const router = express.Router();
 
 //register account
+// tested
 router.post('/register', registeraccount);
 
 //Login account
+// tested 
 router.post('/login', loginaccount);
 
 //google/login
+// tested
 router.post('/google/login', loginWithGoogle);
 
 //logout
-router.get("/logout",UserIsLoggedIn , logoutaccount)
+// tested
+router.get("/logout", UserIsLoggedIn, logoutaccount)
 
 // /forgotpassword
-router.post('/forgotpassword',  forgotPassword);
+// tested
+router.post('/forgotpassword', forgotPassword);
 
-// /updatepassword/token
+// /updatepassword
+// tested
 router.put('/updatepassword', updatePassword);
 
 // /resetpassword
+// tested
 router.put("/resetpassword", UserIsLoggedIn, changePassword);
 
 // /currentuser 
+// tested
 router.get("/currentuser", UserIsLoggedIn, currentUser)
 
 ///profile
+// tested
 router.get("/profile", UserIsLoggedIn, getUserProfile);
 
-// /checkout
-router.get("/checkout", UserIsLoggedIn, checkout);
+
+// /edit/user
+// tested
+router.put("/edit/user", UserIsLoggedIn, updateDetails);
+
 
 // /edit/profile
-router.put("/edit/profile",upload.single("image"), editProfileImage)
+// tested
+router.put("/edit/profile", [UserIsLoggedIn, upload.single("image")], editProfile)
+
+// /checkout
+// tested
+router.get("/checkout", UserIsLoggedIn, checkout);
+
+// /checkout/add/address
+// tested
+router.post("/checkout/add/address", UserIsLoggedIn, addAddress);
+
+// /subscribe 
+router.post("/subscribe",  subscribe)
+
+// /contacts/message
+router.post("/contacts/message", contactUs )
+
 
 module.exports = router;

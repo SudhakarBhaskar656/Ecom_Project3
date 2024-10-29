@@ -1,10 +1,11 @@
 const cartModel = require('../models/cart.model');
 const productModel = require('../models/product.model');
 const userModel = require('../models/user.model');
+const NodeCache = require("node-cache");
+const myCache = new NodeCache({ stdTTL: 100, checkperiod: 120 });
 
 
-
-
+// add product in loginuser cart reference product Id to cart 
 exports.addToCart = async (req, res, next) => {
     try {
         const userId = req.user.userid; // Assuming user is authenticated and req.user.userid is available
@@ -46,17 +47,15 @@ exports.addToCart = async (req, res, next) => {
 
         res.status(200).json({ success: true, message: 'Product added to cart', cart });
     } catch (error) {
-        console.error('Error adding to cart:', error);
         res.status(error.status || 500).json({ success: false, message: error.message });
     }
 };
 
 
-
+// remove a particular product from the cart using productId
 exports.removeFromCart = async (req, res, next) => {
 
     try {
-        console.log(req.user.userid)
         const userId = req.user.userid; // Assuming user is authenticated and req.user.userid is available
         const productId = req.query.productId || req.body.productId; // Extract productId from query string
          
@@ -89,49 +88,66 @@ exports.removeFromCart = async (req, res, next) => {
 
         res.status(200).json({ success: true, message: 'Product removed from cart' });
     } catch (error) {
-        console.error('Error removing from cart:', error);
         res.status(500).json({ success: false, message: error.message });
     }
 };
 
 
-
+// viewCart
 exports.viewCart = async (req, res, next) => {
     try {
-        // Find the user and populate the mycart field
-        const loginuser = await userModel.findOne({ email: req.user.email }).populate("mycart");
-
-        // Check if user was found
-        if (!loginuser) {
-            return res.status(401).json({ success: false, message: "Login user not found" });
-        }
-
-        // Get the cart items (optional, if you need to include cart items in the response)
-        const cartItems = loginuser.mycart;
-
-        // Function to get random items from the product model
-        const getRandomProducts = async (count) => {
-            const allProducts = await productModel.find(); // Fetch all products
-            const shuffled = allProducts.sort(() => 0.5 - Math.random()); // Shuffle the products
-
-            return shuffled.slice(0, count); // Get the first count products
-        };
-
-        // Get up to 20 random products
-        const randomProducts = await getRandomProducts(20);
-
-        // Respond with user data and random products
-        res.status(200).json({
-            success: true,
-            carts: loginuser.mycart,
-            user: loginuser,
-            randomProducts: randomProducts
-        });
-
+      const userEmail = req.user.email;
+  
+      // Create a cache key based on the user email
+      const cacheKey = `cart_${userEmail}`;
+  
+      // Check if cart data exists in the cache
+      const cachedCart = myCache.get(cacheKey);
+      if (cachedCart) {
+        return res.status(200).json(cachedCart); // Return cached response
+      }
+  
+      // Find the user and populate the mycart field
+      const loginuser = await userModel.findOne({ email: userEmail }).populate("mycart");
+  
+      // Check if user was found
+      if (!loginuser) {
+        return res.status(401).json({ success: false, message: "Login user not found" });
+      }
+  
+      // Get the cart items
+      const cartItems = loginuser.mycart;
+  
+      // Function to get random items from the product model
+      const getRandomProducts = async (count) => {
+        const allProducts = await productModel.find(); // Fetch all products
+        const shuffled = allProducts.sort(() => 0.5 - Math.random()); // Shuffle the products
+  
+        return shuffled.slice(0, count); // Get the first count products
+      };
+  
+      // Get up to 20 random products
+      const randomProducts = await getRandomProducts(20);
+  
+      // Prepare the response object
+      const response = {
+        success: true,
+        carts: cartItems,
+        user: loginuser,
+        randomProducts: randomProducts
+      };
+  
+      // Store the response in the cache
+      myCache.set(cacheKey, response);
+       
+      // Respond with user data and random products
+      res.status(200).json(response);
+  
     } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
+      res.status(500).json({ success: false, message: "Internal Server Error" });
     }
-};
+  };
+  
 
 
 

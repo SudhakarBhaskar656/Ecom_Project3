@@ -4,28 +4,32 @@ const {AdminIsLoggedIn} = require("../middlewares/auth.middleware");
 const { adminRegister, adminLogin, adminloginWithGoogle, adminLogout, admindashboard, forgotPassword, updatePassword, changePassword } = require('../controllers/admin.controllers');
 
 
-// /register
+// /register 
+// tested
 router.post("/register",   adminRegister)
 
-// /login
+// /login 
+// tested
 router.post("/login", adminLogin)
 
 // /google/login
+// tested 
 router.post("/google/login", adminloginWithGoogle)
 
 //  /logout
+// tested 
 router.get("/logout",AdminIsLoggedIn, adminLogout)
 
-// /dashboard
-router.get('/dashboard', AdminIsLoggedIn, admindashboard);
-
 // /forgotpassword
+// tested 
 router.post('/forgotpassword',  forgotPassword);
 
-// /updatepassword/token
+// /updatepassword/:token
+// tested 
 router.put('/updatepassword/:token', updatePassword);
 
 // /resetpassword
+// tested
 router.put("/resetpassword", AdminIsLoggedIn, changePassword);
 
 

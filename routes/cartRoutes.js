@@ -4,13 +4,16 @@ const { addToCart, removeFromCart, viewCart} = require('../controllers/cart.cont
 const router = express.Router();
 
 // /add
+// tested
 router.post("/add", UserIsLoggedIn, addToCart);
 
 // /remove
+// tested
 router.put("/remove", UserIsLoggedIn, removeFromCart);
 
-// /cart/view
-router.get("/view", UserIsLoggedIn, viewCart )
+// /mycart
+// tested
+router.get("/mycart", UserIsLoggedIn, viewCart )
 
 
 

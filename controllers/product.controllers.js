@@ -2,52 +2,413 @@ require("dotenv").config();
 const productModel = require("../models/product.model");
 const userModel = require("../models/user.model")
 const reviewModel = require("../models/review.model")
-const multer = require('multer');
-const path = require('path');
-const cloudinary = require('../config/cloudinary');
-const upload = require('../utils/multer');
+const NodeCache = require("node-cache");
+const myCache = new NodeCache({ stdTTL: 100, checkperiod: 120 });
 
 
 const numberWithCommas = (number) => {
     return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 }
+// add products 
+exports.addProduct = async (req, res) => {
+  try {
+    const { name, description, price, category, stock, discount } = req.body;
 
+    // Validate product details
+    if (!name || !description || !price || !category || !stock || !discount) {
+      return res.status(400).json({ success: false, message: "Please fill in all product details" });
+    }
+    
+    // Sanitize and validate price
+    // let sanitizedPrice = parseFloat(price.replace(/,/g, ''));
+    let sanitizedPrice = parseFloat(String(price).replace(/,/g, ''));
 
+    if (isNaN(sanitizedPrice) || sanitizedPrice < 0) {
+      return res.status(400).json({ success: false, message: "Price must be a valid number greater than or equal to 0" });
+    }
+  
+    // Sanitize and validate discount
+    let numericDiscount = parseFloat(discount);
+    if (isNaN(numericDiscount) || numericDiscount < 0 || numericDiscount > 100) {
+      return res.status(400).json({ success: false, message: "Discount must be a number between 0 and 100" });
+    }
+
+    // Calculate the final price after discount
+    let finalPrice = sanitizedPrice;
+    if (numericDiscount > 0) {
+      finalPrice = sanitizedPrice - (sanitizedPrice * (numericDiscount / 100));
+    }
+
+    // Get Cloudinary image URLs
+    if(! req.files){
+      return res.status(400).json({ success: false, message: "please provide images"})
+    }
+    const images = req.files.map(file => file.path);
+
+    // Create a new product in the database
+    const newProduct = await productModel.create({
+      name,
+      description,
+      price: sanitizedPrice,
+      priceAfterDiscount: finalPrice,
+      category,
+      stock,
+      images,
+      discount: numericDiscount,
+    });
+
+    // Respond with the created product
+    res.status(201).json({
+      success: true,
+      newProduct,
+    });
+
+  } catch (error) {
+    console.error('Error creating product:', error);
+    res.status(500).json({ success: false, message: "Internal Server Error" });
+  }
+};
+
+// total products 
 exports.totalProducts = async (req, res, next) => {
-    // Function to format numbers with commas
-    const numberWithCommas = (number) => {
-        return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  try {
+    const DEFAULT_PAGE = 1;
+    const DEFAULT_LIMIT = 10;
+    const MAX_LIMIT = 100; // Set a maximum limit for the number of products per page
+
+    // Destructure and set defaults for query parameters
+    const { page = DEFAULT_PAGE, limit = DEFAULT_LIMIT } = req.query;
+
+    // Validate `page` and `limit` as positive integers
+    const pageNumber = parseInt(page, 10);
+    const limitNumber = parseInt(limit, 10);
+    
+    if (isNaN(pageNumber) || pageNumber < 1 || isNaN(limitNumber) || limitNumber < 1 || limitNumber > MAX_LIMIT) {
+      return res.status(400).json({
+        success: false,
+        message: 'Page and limit must be positive integers, and limit must not exceed ' + MAX_LIMIT + '.',
+      });
+    }
+
+    // Create a cache key based on page and limit
+    const cacheKey = `products_page_${pageNumber}_limit_${limitNumber}`;
+
+    // Check if data exists in the cache
+    const cachedData = myCache.get(cacheKey);
+    if (cachedData) {
+      return res.status(200).json(cachedData); // Return cached response
+    }
+
+    // Calculate the number of documents to skip
+    const skip = (pageNumber - 1) * limitNumber;
+
+    // Use a single aggregation pipeline for efficient data retrieval and handling
+    const [productsData] = await productModel.aggregate([
+      {
+        $facet: {
+          // Get products with pagination and required fields only
+          products: [
+            { $sort: { createdAt: -1 } }, // Sort by latest products
+            { $skip: skip }, // Skip products for pagination
+            { $limit: limitNumber }, // Limit the number of returned products
+            {
+              $project: { // Return only necessary fields to minimize data transfer
+                name: 1,
+                price: 1,
+                images: 1,
+                category: 1,
+                discount: 1,
+                priceAfterDiscount: 1,
+                createdAt: 1,
+              },
+            },
+          ],
+          // Get the total count of products for pagination calculation
+          totalCount: [
+            { $count: 'total' },
+          ],
+        },
+      },
+    ]);
+
+    // Extract products and total count from the aggregation result
+    const products = productsData.products || [];
+    const totalProducts = productsData.totalCount[0]?.total || 0;
+
+    // Calculate total number of pages
+    const totalPages = Math.ceil(totalProducts / limitNumber);
+
+    // If no products are found, send a 404 response
+    if (products.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'No products found.',
+      });
+    }
+
+    // Prepare the response object
+    const response = {
+      success: true,
+      products,
+      pagination: {
+        totalProducts,
+        totalPages,
+        currentPage: pageNumber,
+        itemsPerPage: limitNumber,
+      },
     };
 
-    try {
-        // Fetch all products from the database
-        const products = await productModel.find().exec();
+    // Store the response in the cache
+    myCache.set(cacheKey, response);
 
-        // Check if products were found
-        if (!products || products.length === 0) {
-            return res.status(404).json({ success: false, message: "No products found" });
-        }
-
-        // Format prices with commas
-        const formattedProducts = products.map(product => ({
-            ...product.toObject(),
-            price: numberWithCommas(product.price),
-            priceAfterDiscount: product.priceAfterDiscount ? numberWithCommas(product.priceAfterDiscount) : undefined
-        }));
-
-        // Send the response
-        res.status(200).json({
-            success: true,
-            products: formattedProducts
-        });
-
-    } catch (error) {
-        console.error('Error fetching products:', error);
-        res.status(500).json({ success: false, message: "Internal Server Error" });
-    }
+    // Send response with products and pagination details
+    res.status(200).json(response);
+  } catch (error) {
+    // Log the error and return a server error response
+    console.error('Error in totalProducts:', error);
+    res.status(500).json({
+      success: false,
+      message: 'An error occurred while fetching products.',
+      error: error.message,
+    });
+  }
 };
 
 
+// Controller to get products by category with pagination
+exports.productByCategory = async (req, res, next) => {
+  try {
+    // Extract category from query or params and convert to lowercase
+    let category = req.query.category || req.params.category;
+    if (!category) {
+      return res.status(400).json({ success: false, message: 'Category is required.' });
+    }
+    category = category.toLowerCase();
+
+    // Destructure and set defaults for pagination parameters
+    const { page = 1, limit = 10 } = req.query;
+
+    // Validate `page` and `limit` as positive integers
+    const pageNumber = parseInt(page, 10);
+    const limitNumber = parseInt(limit, 10);
+    if (pageNumber < 1 || limitNumber < 1) {
+      return res.status(400).json({
+        success: false,
+        message: 'Page and limit must be positive integers.',
+      });
+    }
+
+    // Create a cache key based on category, page, and limit
+    const cacheKey = `products_category_${category}_page_${pageNumber}_limit_${limitNumber}`;
+
+    // Check if data exists in the cache
+    const cachedData = myCache.get(cacheKey);
+    if (cachedData) {
+      return res.status(200).json(cachedData); // Return cached response
+    }
+
+    // Calculate the number of documents to skip
+    const skip = (pageNumber - 1) * limitNumber;
+
+    // Define the category filter
+    const categoryFilter = { category: category };
+
+    // Log the filter and pagination parameters for debugging
+    console.log('Category Filter:', categoryFilter);
+    console.log('Pagination - Page:', pageNumber, 'Limit:', limitNumber, 'Skip:', skip);
+
+    // Use aggregation for optimized data retrieval
+    const [categoryData] = await productModel.aggregate([
+      { $match: categoryFilter }, // Filter products by category
+      {
+        $facet: {
+          products: [
+            { $sort: { price: 1 } }, // Sort products by price in ascending order
+            { $skip: skip }, // Skip products for pagination
+            { $limit: limitNumber }, // Limit the number of returned products
+            {
+              $project: { // Return only necessary fields for better performance
+                name: 1,
+                price: 1,
+                images: 1,
+                category: 1,
+                discount: 1,
+                priceAfterDiscount: 1
+              }
+            }
+          ],
+          totalCount: [
+            { $count: 'total' } // Count total products in the category
+          ]
+        }
+      }
+    ]);
+
+    // Log the result of the aggregation query for debugging
+    console.log('Category Data:', JSON.stringify(categoryData, null, 2));
+
+    // Extract products and total count from the aggregation result
+    const products = categoryData?.products || [];
+    const totalProducts = categoryData?.totalCount[0]?.total || 0;
+
+    // Calculate total number of pages
+    const totalPages = Math.ceil(totalProducts / limitNumber);
+
+    // If no products are found for the category
+    if (products.length === 0) {
+      return res.status(404).json({ success: false, message: 'No products found for this category.' });
+    }
+
+    // Format prices with commas for readability
+    const formattedProducts = products.map(product => ({
+      ...product,
+      price: numberWithCommas(product.price),
+      priceAfterDiscount: product.priceAfterDiscount ? numberWithCommas(product.priceAfterDiscount) : undefined
+    }));
+
+    // Prepare the response object
+    const response = {
+      success: true,
+      products: formattedProducts,
+      pagination: {
+        totalProducts,
+        totalPages,
+        currentPage: pageNumber,
+        itemsPerPage: limitNumber
+      }
+    };
+
+    // Store the response in the cache
+    myCache.set(cacheKey, response);
+
+    // Send the response with products and pagination details
+    res.status(200).json(response);
+  } catch (error) {
+    // Log the error and return a server error response
+    console.error('Error in productByCategory:', error);
+    res.status(500).json({
+      success: false,
+      message: 'An error occurred while fetching products by category.',
+      error: error.message
+    });
+  }
+};
+
+
+// sort products by min and max price of the products
+exports.sortProducts = async (req, res, next) => {
+  try {
+    // Destructure and set defaults for query parameters
+    const { minPrice, maxPrice, page = 1, limit = 10 } = req.query;
+
+    // Convert `minPrice` and `maxPrice` to numbers and validate
+    const min = parseFloat(minPrice);
+    const max = parseFloat(maxPrice);
+
+    if (!minPrice || !maxPrice || isNaN(min) || isNaN(max) || min > max) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide a valid price range where minPrice <= maxPrice.',
+      });
+    }
+
+    // Validate `page` and `limit` as positive integers
+    const pageNumber = parseInt(page, 10);
+    const limitNumber = parseInt(limit, 10);
+    if (pageNumber < 1 || limitNumber < 1) {
+      return res.status(400).json({
+        success: false,
+        message: 'Page and limit must be positive integers.',
+      });
+    }
+
+    // Create a cache key based on minPrice, maxPrice, page, and limit
+    const cacheKey = `products_price_${min}_${max}_page_${pageNumber}_limit_${limitNumber}`;
+
+    // Check if data exists in the cache
+    const cachedData = myCache.get(cacheKey);
+    if (cachedData) {
+      return res.status(200).json(cachedData); // Return cached response
+    }
+
+    // Construct price filter object
+    const priceFilter = { price: { $gte: min, $lte: max } };
+
+    // Use aggregation for efficient data retrieval and handling
+    const skip = (pageNumber - 1) * limitNumber;
+
+    // Get total count and filtered products with one database call
+    const [productsData] = await productModel.aggregate([
+      { $match: priceFilter }, // Match products within the price range
+      {
+        $facet: {
+          products: [
+            { $sort: { price: 1 } }, // Sort by price in ascending order
+            { $skip: skip }, // Skip products for pagination
+            { $limit: limitNumber }, // Limit the number of returned products
+            {
+              $project: { // Return only necessary fields
+                name: 1,
+                price: 1,
+                images: 1,
+                category: 1,
+                discount: 1,
+                priceAfterDiscount: 1
+              }
+            }
+          ],
+          totalCount: [
+            { $count: 'total' } // Get total count of products that match the filter
+          ]
+        }
+      }
+    ]);
+
+    // Extract products and total count from the aggregation result
+    const products = productsData.products || [];
+    const totalProducts = productsData.totalCount[0]?.total || 0;
+
+    // Calculate total number of pages
+    const totalPages = Math.ceil(totalProducts / limitNumber);
+
+    // If no products are found within the specified range
+    if (products.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'No products found within the specified price range.',
+      });
+    }
+
+    // Prepare the response object
+    const response = {
+      success: true,
+      products,
+      pagination: {
+        totalProducts,
+        totalPages,
+        currentPage: pageNumber,
+        itemsPerPage: limitNumber
+      }
+    };
+
+    // Store the response in the cache
+    myCache.set(cacheKey, response);
+
+    // Send response with products and pagination details
+    res.status(200).json(response);
+  } catch (error) {
+    // Log the error and return a server error response
+    console.error('Error in sortProducts:', error);
+    res.status(500).json({
+      success: false,
+      message: 'An error occurred while fetching products.',
+      error: error.message
+    });
+  }
+};
+
+
+// fetch single product by id
 exports.singleProduct = async (req, res, next) => {
     // Function to format numbers with commas
     const numberWithCommas = (number) => {
@@ -120,6 +481,77 @@ exports.singleProduct = async (req, res, next) => {
 };
 
 
+// update single product with id checking mode.
+exports.updateProduct = async (req, res) => {
+  try {
+    const { name, description, price, category, stock, discount } = req.body;
+    const productId = req.params.productId || req.query.productId;
+
+    // Validate required fields
+    const requiredFields = { name, description, price, category, stock, discount };
+    for (const [key, value] of Object.entries(requiredFields)) {
+      if (!value) {
+        return res.status(400).json({ success: false, message: `${key.charAt(0).toUpperCase() + key.slice(1)} is required` });
+      }
+    }
+
+    // Validate images
+    if (!req.files) {
+      return res.status(400).json({ success: false, message: "Please provide images" });
+    }
+    const images = req.files.map(file => file.path);
+
+    // Sanitize and validate price
+    const sanitizedPrice = parseFloat(price.replace(/,/g, ''));
+    if (isNaN(sanitizedPrice) || sanitizedPrice < 0) {
+      return res.status(400).json({ success: false, message: "Price must be a valid number greater than or equal to 0" });
+    }
+
+    // Sanitize and validate discount
+    const numericDiscount = parseFloat(discount);
+    if (isNaN(numericDiscount) || numericDiscount < 0 || numericDiscount > 100) {
+      return res.status(400).json({ success: false, message: "Discount must be a number between 0 and 100" });
+    }
+
+    // Calculate the final price after discount
+    const finalPrice = numericDiscount > 0 ? sanitizedPrice - (sanitizedPrice * (numericDiscount / 100)) : sanitizedPrice;
+
+    // Update the product
+    const updatedProduct = await productModel.findByIdAndUpdate(productId, {
+      name,
+      description,
+      price: sanitizedPrice,
+      priceAfterDiscount: finalPrice,
+      category,
+      stock,
+      images,
+      discount: numericDiscount
+    }, { new: true, runValidators: true });
+
+    if (!updatedProduct) {
+      return res.status(404).json({ success: false, message: "Product not found" });
+    }
+
+    // Format numbers with commas for the response
+    const formattedProduct = {
+      ...updatedProduct.toObject(),
+      price: numberWithCommas(updatedProduct.price),
+      priceAfterDiscount: numberWithCommas(updatedProduct.priceAfterDiscount)
+    };
+
+    // Return the response with formatted prices
+    res.status(200).json({ success: true, product: formattedProduct });
+
+  } catch (error) {
+    console.error('Error updating product:', error);
+    const errorMessage = error.name === 'ValidationError' ? error.message : "Internal Server Error";
+    const statusCode = error.kind === 'ObjectId' ? 400 : 500;
+    res.status(statusCode).json({ success: false, message: errorMessage });
+  }
+};
+
+
+// /deleteProduct form id
 exports.deleteProduct = async (req, res, next) => {
     try {
         // Extract product ID from request parameters
@@ -147,247 +579,58 @@ exports.deleteProduct = async (req, res, next) => {
 };
 
 
-exports.updateProduct = async (req, res, next) => {
-    try {
-
-        const numberWithCommas = (number) => {
-            return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-        };
-
-        const { name, description, price, category, stock, images, discount } = req.body;
-        const productId = req.params.productId || req.query.productId;
-
-        if (!productId) {
-            return res.status(400).json({ success: false, message: "Product ID is required" });
-        }
-
-        // Check if all required fields are present
-        if (!name || !description || !price || !category || !stock || !images || !discount) {
-            return res.status(400).json({ success: false, message: "Please provide all product details" });
-        }
-
-        // Sanitize and validate price
-        let sanitizedPrice = parseFloat(price.replace(/,/g, '')); // Remove commas and convert to number
-        if (isNaN(sanitizedPrice) || sanitizedPrice < 0) {
-            return res.status(400).json({ success: false, message: "Price must be a valid number greater than or equal to 0" });
-        }
-
-        // Sanitize and validate discount
-        let numericDiscount = parseFloat(discount);
-        if (isNaN(numericDiscount) || numericDiscount < 0 || numericDiscount > 100) {
-            return res.status(400).json({ success: false, message: "Discount must be a number between 0 and 100" });
-        }
-
-        // Calculate the final price after discount
-        let finalPrice = sanitizedPrice;
-        if (numericDiscount > 0) {
-            finalPrice = sanitizedPrice - (sanitizedPrice * (numericDiscount / 100));
-        }
-
-        // Update the product
-        const updatedProduct = await productModel.findByIdAndUpdate(productId, {
-            name,
-            description,
-            price: sanitizedPrice,
-            priceAfterDiscount: finalPrice,
-            category,
-            stock,
-            images,
-            discount: numericDiscount
-        }, { new: true, runValidators: true });
-
-        if (!updatedProduct) {
-            return res.status(404).json({ success: false, message: "Product not found" });
-        }
-
-        // Format numbers with commas for the response
-        const formattedProduct = {
-            ...updatedProduct.toObject(),
-            price: numberWithCommas(updatedProduct.price),
-            priceAfterDiscount: numberWithCommas(updatedProduct.priceAfterDiscount)
-        };
-
-        // Return the response with formatted prices
-        res.status(200).json({
-            success: true,
-            product: formattedProduct
-        });
-
-    } catch (error) {
-        console.error('Error updating product:', error);
-
-        if (error.name === 'ValidationError') {
-            return res.status(400).json({ success: false, message: error.message });
-        }
-
-        if (error.kind === 'ObjectId') {
-            return res.status(400).json({ success: false, message: "Invalid product ID format" });
-        }
-
-        res.status(500).json({ success: false, message: "Internal Server Error", error: error.message });
-    }
-};
-
-
-exports.productByCategory = async (req, res, next) => {
-    try {
-
-        let category = req.query.category || req.params.category;
-        category = category.toLowerCase();
-        
-        if (!category) {
-            return res.status(400).json({ success: false, message: 'Category is required' });
-        }
-        
-        // Find products by category, ensuring that category matches exactly
-        const products = await productModel.find({ category: category });
-
-
-        if (products.length === 0) {
-            console.log('Category:', category); // Debugging
-            return res.status(404).json({ success: false, message: 'No products found for this category' });
-        }
-        res.status(200).json({ success: true, products });
-    } catch (error) {
-        console.error('No Products Found For this Category', error); // Debugging
-        res.status(error.status || 500).json({ success: false, message: error.message });
-    }
-};
-
-
+// search products  
 exports.searchProducts = async (req, res, next) => {
-    try {
-        const { query } = req.query; // Retrieve the search query from the request
+  try {
+    const { query } = req.query; // Retrieve the search query from the request
+    
+    // Check if the query parameter is provided
+    if (!query) {
+      return res.status(400).json({ success: false, message: 'Query is required' });
+    }
+    
+    // Create a case-insensitive regex pattern for matching the query
+    const regexPattern = new RegExp(query, 'i');
+    
+    // Create a cache key based on the query
+    const cacheKey = `search_${query}`;
 
-        // Check if the query parameter is provided
-        if (!query) {
-            return res.status(400).json({ success: false, message: 'Query is required' });
-        }
-
-        // Create a case-insensitive regex pattern for matching the query
-        const regexPattern = new RegExp(query, 'i');
-
-        // Find products that match the query in title, category, or any other fields
-        const products = await productModel.find({
-            $or: [
-                { name: { $regex: regexPattern } },
-                { category: { $regex: regexPattern } },
-                { description: { $regex: regexPattern } },
-                // Add other fields you want to search here
-            ]
-        }).lean(); // Use .lean() to return plain JavaScript objects for better performance
-
-        // Check if no products were found
-        if (products.length === 0) {
-            return res.status(404).json({ success: false, message: 'No products found' });
-        }
-
-        // Send the response with found products
-        res.status(200).json({ success: true, products });
-    } catch (error) {
-        console.error('Error in searchProducts:', error);
-        res.status(500).json({ success: false, message: 'Server error' });
+    // Check if data exists in the cache
+    const cachedData = myCache.get(cacheKey);
+    if (cachedData) {
+      return res.status(200).json(cachedData); // Return cached response
     }
 
+    // Find products that match the query in title, category, or any other fields
+    const products = await productModel.find({
+      $or: [
+        { name: { $regex: regexPattern } },
+        { category: { $regex: regexPattern } },
+        { description: { $regex: regexPattern } },
+      ]
+    }).lean(); // Use .lean() to return plain JavaScript objects for better performance
+    
+    // Check if no products were found
+    if (products.length === 0) {
+      return res.status(404).json({ success: false, message: 'No products found' });
+    }
 
+    // Prepare the response object
+    const response = { success: true, products };
 
+    // Store the response in the cache
+    myCache.set(cacheKey, response);
 
+    // Send the response with found products
+    res.status(200).json(response);
+  } catch (error) {
+    console.error('Error in searchProducts:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
 };
 
 
-exports.addProduct = async (req, res) => {
-    try {
-      const { name, description, price, category, stock, discount } = req.body;
-  
-      // Validate product details
-      if (!name || !description || !price || !category || !stock || !discount) {
-        return res.status(400).json({ success: false, message: "Please fill in all product details" });
-      }
-  
-      // Sanitize and validate price
-      let sanitizedPrice = parseFloat(price.replace(/,/g, ''));
-      if (isNaN(sanitizedPrice) || sanitizedPrice < 0) {
-        return res.status(400).json({ success: false, message: "Price must be a valid number greater than or equal to 0" });
-      }
-  
-      // Sanitize and validate discount
-      let numericDiscount = parseFloat(discount);
-      if (isNaN(numericDiscount) || numericDiscount < 0 || numericDiscount > 100) {
-        return res.status(400).json({ success: false, message: "Discount must be a number between 0 and 100" });
-      }
-  
-      // Calculate the final price after discount
-      let finalPrice = sanitizedPrice;
-      if (numericDiscount > 0) {
-        finalPrice = sanitizedPrice - (sanitizedPrice * (numericDiscount / 100));
-      }
-  
-      // Get Cloudinary image URLs
-      const images = req.files.map(file => file.path); // Cloudinary stores the URL in `file.path`
-  
-      // Create a new product in the database
-      const newProduct = await productModel.create({
-        name,
-        description,
-        price: sanitizedPrice,
-        priceAfterDiscount: finalPrice,
-        category,
-        stock,
-        images,
-        discount: numericDiscount,
-      });
-  
-      // Respond with the created product
-      res.status(201).json({
-        success: true,
-        newProduct,
-      });
-  
-    } catch (error) {
-      console.error('Error creating product:', error);
-      res.status(500).json({ success: false, message: "Internal Server Error" });
-    }
-  };
-
-
-  exports.sortProducts = async (req, res, next) => {
-    try {
-      // Get price range from query parameters
-      const { minPrice, maxPrice } = req.query;
-  
-      // Validate minPrice and maxPrice
-      if (!minPrice || !maxPrice) {
-        return res.status(400).json({ message: 'minPrice and maxPrice are required.' });
-      }
-  
-      const min = Number(minPrice);
-      const max = Number(maxPrice);
-  
-      // Validate that min and max are numbers and min <= max
-      if (isNaN(min) || isNaN(max) || min > max) {
-        return res.status(400).json({ message: 'Invalid price range provided.' });
-      }
-  
-      // Create filter object for price range
-      const filter = {
-        price: { $gte: min, $lte: max }
-      };
-  
-      // Fetch and sort products by price within the specified range
-      const products = await productModel.find(filter)
-        .sort({ price: 1 })
-        .select('name price images category discount priceAfterDiscount'); // Project only necessary fields
-  
-      // Respond with sorted and filtered products
-      res.status(200).json({success : true, products});
-    } catch (error) {
-      console.error('Error fetching products:', error); // Log the error for debugging
-      res.status(500).json({ message: 'Server error', error: error.message });
-    }
-  };
-
-
-
+// add reviews to rate the product by comment rating number.
   exports.addReview = async (req, res) => {
     try {
       const { productId, rating, comment } = req.body;
@@ -439,32 +682,55 @@ exports.addProduct = async (req, res) => {
   };
 
 
+// reviews of the product by Id
   exports.getProductReviews = async (req, res) => {
     try {
       const { productId } = req.params || req.query;
+  
       // Check if the product exists
       const product = await productModel.findById(productId);
       if (!product) {
         return res.status(404).json({ success: false, message: "Product not found" });
       }
   
+      // Create a cache key based on the product ID
+      const cacheKey = `reviews_${productId}`;
+  
+      // Check if reviews exist in the cache
+      const cachedReviews = myCache.get(cacheKey);
+      if (cachedReviews) {
+        return res.status(200).json(cachedReviews); // Return cached response
+      }
+  
       // Find all reviews related to this product
       const reviews = await reviewModel.find({ product: productId })
         .populate('user', 'username profile') // Populating the user details (optional)
         .sort({ createdAt: -1 }); // Sort by newest first (optional)
+  
       if (reviews.length === 0) {
         return res.status(404).json({ success: false, message: "No reviews found for this product" });
       }
   
-      // Return the reviews
-      res.status(200).json({
+      // Prepare the response object
+      const response = {
         success: true,
         reviews,
-      });
+      };
   
+      // Store the reviews in the cache
+      myCache.set(cacheKey, response);
+  
+      // Return the reviews
+      res.status(200).json(response);
     } catch (error) {
       console.error('Error fetching product reviews:', error);
       res.status(500).json({ success: false, message: "Internal Server Error" });
     }
   };
+  
+
+
+
+
+  
   

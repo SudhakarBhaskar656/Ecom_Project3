@@ -4,13 +4,16 @@ const { addToWishList, removeFromWishlist, userWishlist } = require("../controll
 const router = express.Router();
 
 // /add
+// tested
  router.put("/add", UserIsLoggedIn, addToWishList)
 
 // /remove
+// tested
 router.put("/remove", UserIsLoggedIn, removeFromWishlist)
 
-// /view
-router.get("/view", UserIsLoggedIn,  userWishlist)
+// /mywishlist
+// tested
+router.get("/mywishlist", UserIsLoggedIn,  userWishlist)
 
 
 module.exports = router;
