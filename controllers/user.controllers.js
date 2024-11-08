@@ -82,7 +82,6 @@ exports.loginWithGoogle = async (req, res) => {
     }
 };
 
-  
 
 // User logout
 exports.logoutaccount = (req, res) => {

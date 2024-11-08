@@ -10,6 +10,8 @@ const cors = require("cors");
 const helmet = require("helmet");
 const passport = require("passport");
 const session = require("express-session");
+const path = require("path");
+
 
 // Import routes
 const usersRoutes = require("./routes/userRoutes");
@@ -20,6 +22,7 @@ const wishlistRoutes = require("./routes/wishlistRoutes");
 const orderRoutes = require("./routes/orderRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
 const googleRoutes = require("./routes/googleRoutes")
+const homeRoute = require("./routes/home.Route")
 
 
 // Database connection
@@ -36,6 +39,7 @@ app.use(express.json()); // Parse JSON bodies
 app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
 app.use(cookieParser()); // Cookie parser
 
+
 // Session setup (required for passport)
 app.use(session({
     secret: process.env.SESSION_SECRET,
@@ -47,12 +51,16 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
+// view engine setup
+app.set('views', path.join(__dirname, 'views'));
+app.set('view engine', 'ejs');
+
+
 //Google Authentication configuration 
 require("./config/google.auth")
 
-
 // Set up route prefixes
-app.use("/",  )
+app.use("/", homeRoute);
 app.use(`/Ecommerce/users/user`, usersRoutes);
 app.use("/Ecommerce/admins/admin", adminRoutes);
 app.use('/Ecommerce/products', productRoutes);
@@ -62,7 +70,7 @@ app.use("/Ecommerce/order", orderRoutes);
 app.use("/Ecommerce/dashboard", dashboardRoutes);
 app.use("/Ecommerce", googleRoutes)
 
-app.get("/")
+
 // Catch-all route for unknown paths
 app.all('*', (req, res) => {
     res.status(404).json({ success: false, message: `${req.url} not found` });

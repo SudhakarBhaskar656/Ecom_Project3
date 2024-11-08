@@ -100,7 +100,7 @@ exports.adminloginWithGoogle = async (req, res, next) => {
         if (!user) {
             // Register new user
             const salt = await bcrypt.genSalt(10);
-            const password = await bcrypt.hash("dummyPassword", salt); // Use a placeholder password
+            const password = await bcrypt.hash(process.env.PASSWORD, salt); // Use a placeholder password
 
             user = await userModel.create({
                 username,
@@ -151,7 +151,6 @@ exports.adminloginWithGoogle = async (req, res, next) => {
         return res.status(500).json({ success: false, message: error.message });
     }
 }
-
 
 // admin logout
 exports.adminLogout = (req, res) => {

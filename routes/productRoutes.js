@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { totalProducts, singleProduct, updateProduct, deleteProduct, productByCategory, searchProducts, sortProducts, uploadImages, addReview, getProductReviews, addProduct, addMultipleProducts, GenerateShareLink, getShareProduct } = require('../controllers/product.controllers');
+const { totalProducts, singleProduct, updateProduct, deleteProduct, productByCategory, searchProducts, sortProducts,addReview, getProductReviews, addProduct } = require('../controllers/product.controllers');
 const { AdminIsLoggedIn, UserIsLoggedIn } = require('../middlewares/auth.middleware');
 const upload = require("../utils/multer");
 

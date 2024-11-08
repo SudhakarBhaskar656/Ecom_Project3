@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ecommerce API Documentation</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/locomotive-scroll@4.0.0/dist/locomotive-scroll.css">
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f7fa;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            height: 100%;
+             overflow-x: hidden;
+        }
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        h1 {
+            font-size: 2.5em;
+            color: #1a202c;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .endpoint {
+            margin: 20px 0;
+            padding: 20px;
+            background-color: #ffffff;
+            border-radius: 5px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .endpoint h3 {
+            font-size: 1.2em;
+            color: #2d3748;
+        }
+        .method {
+            font-weight: bold;
+            color: #fff;
+            padding: 2px 6px;
+            border-radius: 3px;
+            margin-right: 10px;
+        }
+        .method.POST {
+            background-color: #48bb78;
+        }
+        .method.GET {
+            background-color: #4299e1;
+        }
+        .method.PUT {
+            background-color: #ed8936;
+        }
+        .method.DELETE {
+            background-color: #e53e3e;
+        }
+        .description, .parameters {
+            margin: 10px 0;
+        }
+        .parameters ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        .parameters ul li {
+            padding: 5px 0;
+        }
+        .footer {
+            text-align: center;
+            font-size: 0.9em;
+            color: #718096;
+            margin-top: 40px;
+        }
+        h2{
+            margin-top: 40px ;
+             margin-left: 20px;
+        }
+
+        /* Target the scrollbar container */
+::-webkit-scrollbar {
+  width: 12px;  /* Set the width of the vertical scrollbar */
+  height: 12px; /* Set the height of the horizontal scrollbar */
+}
+
+/* Style the scrollbar track (the background) */
+::-webkit-scrollbar-track {
+  background: #f1f1f1d8; /* Light gray background with slight transparency */
+  border-radius: 10px;
+  box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.1); /* Optional subtle shadow for depth */
+}
+
+/* Style the scrollbar thumb (the draggable part) */
+::-webkit-scrollbar-thumb {
+  background: #333; /* Darker color for the thumb */
+  border-radius: 10px;
+  transition: background 0.3s ease, transform 0.3s ease; /* Smooth transition for color and size */
+  box-shadow: 0 0 3px rgba(0, 0, 0, 0.3); /* Optional shadow for thumb */
+}
+
+/* Hover effect for the scrollbar thumb */
+::-webkit-scrollbar-thumb:hover {
+  background: #555; /* Darker color when hovered */
+  transform: scale(1.1); /* Slightly enlarge the thumb when hovered */
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.5); /* Stronger shadow on hover */
+}
+
+/* Optional: Style the scrollbar corner (where horizontal and vertical scrollbars meet) */
+::-webkit-scrollbar-corner {
+  background: #f1f1f1d8; /* Match the track background */
+}
+
+
+    </style>
+</head>
+<body>
+    <div data-scroll-container class="container">
+        <h1 style="position: fixed; z-index: 999; top: 3%;  left: 50%; transform: translate(-50%); font-weight:300;">Ecommerce API Docs</h1>
+        <div data-scroll data-scroll-speed="4" class="endpoint">
+            <!-- Users Route Documentation -->
+
+            <h2>Users API</h2>
+            <div class="endpoint">
+                <h3>Base URI for Users: <code>/Ecommerce/users/user</code></h3>
+    
+                <div>
+                    <span class="method POST">POST</span> 
+                    <strong>/register</strong> - Register a new user
+                    <div class="description">Registers a new user account.</div>
+                    <div class="parameters">
+                        <strong>Parameters:</strong>
+                        <ul>
+                            <li><strong>email</strong>: string, required</li>
+                            <li><strong>password</strong>: string, required</li>
+                            <li><strong>name</strong>: string, optional</li>
+                        </ul>
+                    </div>
+                </div>
+    
+                <div>
+                    <span class="method POST">POST</span>
+                    <strong>/login</strong> - Login user
+                    <div class="description">Logs a user into their account.</div>
+                    <div class="parameters">
+                        <strong>Parameters:</strong>
+                        <ul>
+                            <li><strong>email</strong>: string, required</li>
+                            <li><strong>password</strong>: string, required</li>
+                        </ul>
+                    </div>
+                </div>
+    
+    
+                <div>
+                    <span class="method GET">GET</span>
+                    <strong>/logout</strong> - Logout user
+                    <div class="description">Logs out the current user.</div>
+                </div>
+    
+                <div>
+                    <span class="method POST">POST</span>
+                    <strong>/forgotpassword</strong> - Forgot password
+                    <div class="description">Sends password reset link to the user's email.</div>
+                    <div class="parameters">
+                        <strong>Parameters:</strong>
+                        <ul>
+                            <li><strong>email</strong>: string, required</li>
+                        </ul>
+                    </div>
+                </div>
+    
+                <div>
+                    <span class="method PUT">PUT</span>
+                    <strong>/updatepassword</strong> - Update password
+                    <div class="description">Updates the user's password when authenticated.</div>
+                    <div class="parameters">
+                        <strong>Parameters:</strong>
+                        <ul>
+                            <li><strong>currentPassword</strong>: string, required</li>
+                            <li><strong>newPassword</strong>: string, required</li>
+                        </ul>
+                    </div>
+                </div>
+    
+                <div>
+                    <span class="method PUT">PUT</span>
+                    <strong>/resetpassword</strong> - Reset password
+                    <div class="description">Resets the password after validating the reset token.</div>
+                    <div class="parameters">
+                        <strong>Parameters:</strong>
+                        <ul>
+                            <li><strong>token</strong>: string, required</li>
+                            <li><strong>newPassword</strong>: string, required</li>
+                        </ul>
+                    </div>
+                </div>
+    
+                <div>
+                    <span class="method GET">GET</span>
+                    <strong>/currentuser</strong> - Get current user
+                    <div class="description">Returns details of the currently logged-in user.</div>
+                </div>
+    
+                <div>
+                    <span class="method GET">GET</span>
+                    <strong>/profile</strong> - Get user profile
+                    <div class="description">Fetches the profile of the current user.</div>
+                </div>
+    
+                <div>
+                    <span class="method PUT">PUT</span>
+                    <strong>/edit/user</strong> - Update user details
+                    <div class="description">Updates user profile details.</div>
+                    <div class="parameters">
+                        <strong>Parameters:</strong>
+                        <ul>
+                            <li><strong>name</strong>: string, optional</li>
+                            <li><strong>email</strong>: string, optional</li>
+                        </ul>
+                    </div>
+                </div>
+    
+                <div>
+                    <span class="method PUT">PUT</span>
+                    <strong>/edit/profile</strong> - Edit profile with image upload
+                    <div class="description">Updates profile details and allows an image upload.</div>
+                    <div class="parameters">
+                        <strong>Parameters:</strong>
+                        <ul>
+                            <li><strong>image</strong>: file, optional</li>
+                        </ul>
+                    </div>
+                </div>
+    
+                <div>
+                    <span class="method GET">GET</span>
+                    <strong>/checkout</strong> - Checkout
+                    <div class="description">Starts the checkout process.</div>
+                </div>
+    
+                <div>
+                    <span class="method POST">POST</span>
+                    <strong>/checkout/add/address</strong> - Add address for checkout
+                    <div class="description">Adds a new address for the current checkout session.</div>
+                    <div class="parameters">
+                        <strong>Parameters:</strong>
+                        <ul>
+                            <li><strong>address</strong>: string, required</li>
+                            <li><strong>city</strong>: string, required</li>
+                            <li><strong>zipCode</strong>: string, required</li>
+                        </ul>
+                    </div>
+                </div>
+    
+                <div>
+                    <span class="method POST">POST</span>
+                    <strong>/subscribe</strong> - Subscribe user
+                    <div class="description">Subscribes the user to the newsletter or updates.</div>
+                </div>
+    
+                <div>
+                    <span class="method POST">POST</span>
+                    <strong>/contacts/message</strong> - Send message via contact form
+                    <div class="description">Allows users to send a message through the contact form.</div>
+                    <div class="parameters">
+                        <strong>Parameters:</strong>
+                        <ul>
+                            <li><strong>name</strong>: string, required</li>
+                            <li><strong>email</strong>: string, required</li>
+                            <li><strong>message</strong>: string, required</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <h2>Admin API</h2>
+        <div data-scroll data-scroll-speed="4" class="endpoint">
+            <h3>Base URI for Admin: <code>/Ecommerce/admins/admin</code></h3>
+
+            <div>
+                <span class="method POST">POST</span> 
+                <strong>/register</strong> - Register a new admin
+                <div class="description">Registers a new admin account.</div>
+                <div class="parameters">
+                    <strong>Parameters:</strong>
+                    <ul>
+                        <li><strong>email</strong>: string, required</li>
+                        <li><strong>password</strong>: string, required</li>
+                        <li><strong>name</strong>: string, optional</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div>
+                <span class="method POST">POST</span>
+                <strong>/login</strong> - Login admin
+                <div class="description">Logs an admin into their account.</div>
+                <div class="parameters">
+                    <strong>Parameters:</strong>
+                    <ul>
+                        <li><strong>email</strong>: string, required</li>
+                        <li><strong>password</strong>: string, required</li>
+                    </ul>
+                </div>
+            </div>
+
+          
+            <div>
+                <span class="method GET">GET</span>
+                <strong>/logout</strong> - Logout admin
+                <div class="description">Logs out the currently authenticated admin.</div>
+            </div>
+
+            <div>
+                <span class="method POST">POST</span>
+                <strong>/forgotpassword</strong> - Forgot password for admin
+                <div class="description">Sends password reset link to the admin's email.</div>
+                <div class="parameters">
+                    <strong>Parameters:</strong>
+                    <ul>
+                        <li><strong>email</strong>: string, required</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div>
+                <span class="method PUT">PUT</span>
+                <strong>/updatepassword/:token</strong> - Update password for admin
+                <div class="description">Updates the admin's password using a token.</div>
+                <div class="parameters">
+                    <strong>Parameters:</strong>
+                    <ul>
+                        <li><strong>token</strong>: string, required (from URL parameter)</li>
+                        <li><strong>newPassword</strong>: string, required</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div>
+                <span class="method PUT">PUT</span>
+                <strong>/resetpassword</strong> - Reset password for admin
+                <div class="description">Resets the password after validating the reset token for the admin.</div>
+                <div class="parameters">
+                    <strong>Parameters:</strong>
+                    <ul>
+                        <li><strong>newPassword</strong>: string, required</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <h2>Products API</h2>
+        <div  data-scroll data-scroll-speed="4"  class="endpoint">
+            <h3>Base URI for Products: <code>/Ecommerce/products</code></h3>
+
+            <div>
+                <span class="method POST">POST</span> 
+                <strong>/add</strong> - Add a New Product
+                <div class="description">Adds a new product to the store.</div>
+                <div class="parameters">
+                    <strong>Request Body:</strong>
+                    <ul>
+                        <li><strong>images</strong>: array of files, required (Product Images)</li>
+                        <li><strong>name</strong>: string, required (Product Name)</li>
+                        <li><strong>price</strong>: number, required (Product Price)</li>
+                        <li><strong>description</strong>: string, optional (Product Description)</li>
+                        <li><strong>category</strong>: string, required (Product Category)</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div>
+                <span class="method GET">GET</span> 
+                <strong>/all</strong> - Get All Products
+                <div class="description">Fetches all products in the store.</div>
+            </div>
+
+            <div>
+                <span class="method GET">GET</span> 
+                <strong>/product/:id</strong> - Get a Specific Product
+                <div class="description">Fetches a specific product by its ID.</div>
+                <div class="parameters">
+                    <strong>Parameters:</strong>
+                    <ul>
+                        <li><strong>id</strong>: string, required (Product ID)</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div>
+                <span class="method.PUT">PUT</span> 
+                <strong>/product/update/:productId</strong> - Update a Product
+                <div class="description">Updates an existing product's details by its ID.</div>
+                <div class="parameters">
+                    <strong>Parameters:</strong>
+                    <ul>
+                        <li><strong>productId</strong>: string, required (Product ID)</li>
+                    </ul>
+                    <strong>Request Body:</strong>
+                    <ul>
+                        <li><strong>images</strong>: array of files, optional (Product Images)</li>
+                        <li><strong>name</strong>: string, optional (Product Name)</li>
+                        <li><strong>price</strong>: number, optional (Product Price)</li>
+                        <li><strong>description</strong>: string, optional (Product Description)</li>
+                        <li><strong>category</strong>: string, optional (Product Category)</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div>
+                <span class="method DELETE">DELETE</span> 
+                <strong>/product/delete/:id</strong> - Delete a Product
+                <div class="description">Deletes a specific product by its ID.</div>
+                <div class="parameters">
+                    <strong>Parameters:</strong>
+                    <ul>
+                        <li><strong>id</strong>: string, required (Product ID)</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div>
+                <span class="method GET">GET</span> 
+                <strong>/category</strong> - Get Products by Category
+                <div class="description">Fetches products filtered by category.</div>
+            </div>
+
+            <div>
+                <span class="method GET">GET</span> 
+                <strong>/searchproducts</strong> - Search Products
+                <div class="description">Searches products based on query parameters.</div>
+            </div>
+
+            <div>
+                <span class="method GET">GET</span> 
+                <strong>/sortproducts</strong> - Sort Products
+                <div class="description">Sorts products based on specified criteria.</div>
+            </div>
+
+            <div>
+                <span class="method POST">POST</span> 
+                <strong>/add/review</strong> - Add a Product Review
+                <div class="description">Allows a logged-in user to add a review for a product.</div>
+                <div class="parameters">
+                    <strong>Request Body:</strong>
+                    <ul>
+                        <li><strong>productId</strong>: string, required (Product ID)</li>
+                        <li><strong>rating</strong>: number, required (Rating from 1 to 5)</li>
+                        <li><strong>comment</strong>: string, optional (Review Comment)</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div>
+                <span class="method GET">GET</span> 
+                <strong>/product/:productId/reviews</strong> - Get Product Reviews
+                <div class="description">Fetches all reviews for a specific product.</div>
+                <div class="parameters">
+                    <strong>Parameters:</strong>
+                    <ul>
+                        <li><strong>productId</strong>: string, required (Product ID)</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+
+        <h2>Cart API</h2>
+        <div  data-scroll data-scroll-speed="4"  class="endpoint">
+            <h3>Base URI for Cart: <code>/Ecommerce/users/user/cart</code></h3>
+
+            <div>
+                <span class="method POST">POST</span> 
+                <strong>/add</strong> - Add Item to Cart
+                <div class="description">Adds a product to the user's cart.</div>
+                <div class="parameters">
+                    <strong>Request Body:</strong>
+                    <ul>
+                        <li><strong>productId</strong>: string, required (Product ID)</li>
+                        <li><strong>quantity</strong>: number, required (Quantity of the product)</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div>
+                <span class="method GET">GET</span> 
+                <strong>/view</strong> - View Cart Items
+                <div class="description">Fetches the items currently in the user's cart.</div>
+            </div>
+
+            <div>
+                <span class="method PUT">PUT</span> 
+                <strong>/update</strong> - Update Cart Item
+                <div class="description">Updates the quantity of a product in the user's cart.</div>
+                <div class="parameters">
+                    <strong>Request Body:</strong>
+                    <ul>
+                        <li><strong>productId</strong>: string, required (Product ID)</li>
+                        <li><strong>quantity</strong>: number, required (New quantity of the product)</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div>
+                <span class="method DELETE">DELETE</span> 
+                <strong>/remove</strong> - Remove Item from Cart
+                <div class="description">Removes a product from the user's cart.</div>
+                <div class="parameters">
+                    <strong>Request Body:</strong>
+                    <ul>
+                        <li><strong>productId</strong>: string, required (Product ID)</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div>
+                <span class="method DELETE">DELETE</span> 
+                <strong>/clear</strong> - Clear Cart
+                <div class="description">Clears all items from the user's cart.</div>
+            </div>
+        </div>
+
+
+
+        <h2>Wishlist API</h2>
+        <div  data-scroll data-scroll-speed="4"  class="endpoint">
+            <h3>Base URI for Wishlist: <code>/Ecommerce/user/wishlist</code></h3>
+
+            <div>
+                <span class="method PUT">PUT</span> 
+                <strong>/add</strong> - Add Item to Wishlist
+                <div class="description">Adds a product to the user's wishlist.</div>
+                <div class="parameters">
+                    <strong>Request Body:</strong>
+                    <ul>
+                        <li><strong>productId</strong>: string, required (Product ID)</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div>
+                <span class="method PUT">PUT</span> 
+                <strong>/remove</strong> - Remove Item from Wishlist
+                <div class="description">Removes a product from the user's wishlist.</div>
+                <div class="parameters">
+                    <strong>Request Body:</strong>
+                    <ul>
+                        <li><strong>productId</strong>: string, required (Product ID)</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div>
+                <span class="method GET">GET</span> 
+                <strong>/mywishlist</strong> - View User's Wishlist
+                <div class="description">Fetches all items currently in the user's wishlist.</div>
+            </div>
+        </div>
+
+
+        <h2>Order API</h2>
+        <div  data-scroll data-scroll-speed="4"  class="endpoint">
+            <h3>Base URI for Order: <code>/Ecommerce/order</code></h3>
+
+            <div>
+                <span class="method POST">POST</span> 
+                <strong>/create</strong> - Create a New Order (for Users)
+                <div class="description">Creates a new order for the logged-in user.</div>
+                <div class="parameters">
+                    <strong>Request Body:</strong>
+                    <ul>
+                        <li><strong>products</strong>: array of product IDs and quantities, required</li>
+                        <li><strong>address</strong>: string, required (Shipping address)</li>
+                        <li><strong>paymentMethod</strong>: string, required (e.g., 'credit card', 'PayPal')</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div>
+                <span class="method GET">GET</span> 
+                <strong>/user/orders</strong> - Get All Orders for the Logged-in User
+                <div class="description">Fetches all orders for the logged-in user.</div>
+            </div>
+
+            <div>
+                <span class="method GET">GET</span> 
+                <strong>/:orderId</strong> - Get a Single Order by Order ID (for Users/Admins)
+                <div class="description">Fetches details of a single order by order ID.</div>
+            </div>
+
+            <div>
+                <span class="method PUT">PUT</span> 
+                <strong>/update/:orderId/status</strong> - Update Order Status (for Admin)
+                <div class="description">Updates the status of the order (e.g., "Shipped", "Delivered").</div>
+            </div>
+
+            <div>
+                <span class="method PUT">PUT</span> 
+                <strong>/cancel/:orderId</strong> - Cancel an Order (for Admins)
+                <div class="description">Cancels an order by its ID (only accessible to admins).</div>
+            </div>
+
+            <div>
+                <span class="method PUT">PUT</span> 
+                <strong>/cancel/:orderId</strong> - Cancel an Order (for Users)
+                <div class="description">Cancels an order by its ID (users can cancel their own orders).</div>
+            </div>
+
+            <div>
+                <span class="method GET">GET</span> 
+                <strong>/generate/:orderId</strong> - Generate Invoice for Order
+                <div class="description">Generates an invoice for the specified order ID.</div>
+            </div>
+        </div>
+
+
+           <!-- Dashboard Routes Documentation -->
+           <h2>Dashboard API</h2>
+           <div  data-scroll data-scroll-speed="4"  class="endpoint">
+               <h3>Base URI for Dashboard: <code>/Ecommerce/dashboard</code></h3>
+   
+               <div>
+                   <span class="method GET">GET</span> 
+                   <strong>/total/orders</strong> - Get Total Orders
+                   <div class="description">Fetches the total number of orders in the system, useful for admin reporting and analytics.</div>
+               </div>
+   
+               <div>
+                   <span class="method GET">GET</span> 
+                   <strong>/generate/reports</strong> - Generate Reports
+                   <div class="description">Generates detailed reports for the admin, including orders, sales, and other system metrics.</div>
+               </div>
+   
+               <div>
+                   <span class="method GET">GET</span> 
+                   <strong>/orders/status</strong> - Get Order Status
+                   <div class="description">Fetches the current status of orders in the system, such as pending, completed, or canceled.</div>
+               </div>
+           </div>
+
+
+           <div class="footer">
+            <p>&copy; 2024 Ecommerce API Docs  <br><span>Author  <b>Syed Samad Ali</b> <br>made with love ❤️</span></p>
+        </div>
+
+
+    </div>
+
+
+             
+
+    </div>
+  
+<!-- Locomotive Scroll JS -->
+<script src="https://unpkg.com/locomotive-scroll"></script>
+<script>
+    const scroll = new LocomotiveScroll({
+      el: document.querySelector('[data-scroll-container]'),
+      smooth: true
+    });
+
+    window.addEventListener('resize', () => {
+      scroll.update();
+    });
+  </script>
+</body>
+</html>

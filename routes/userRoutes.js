@@ -1,6 +1,6 @@
 
 const express = require('express');
-const { registeraccount, loginaccount, logoutaccount, forgotPassword, updatePassword, changePassword, currentUser, getUserProfile, updateDetails, editProfile, checkout, addAddress, subscribe, contactUs, loginWithGoogle, failureMessage } = require('../controllers/user.controllers');
+const { registeraccount, loginaccount, logoutaccount, forgotPassword, updatePassword, changePassword, currentUser, getUserProfile, updateDetails, editProfile, checkout, addAddress, subscribe, contactUs, loginWithGoogle} = require('../controllers/user.controllers');
 const { UserIsLoggedIn } = require('../middlewares/auth.middleware');
 const upload = require("../utils/multer");
 const router = express.Router();
