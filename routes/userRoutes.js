@@ -1,9 +1,10 @@
 
 const express = require('express');
-const { registeraccount, loginaccount, logoutaccount, loginWithGoogle, forgotPassword, updatePassword, changePassword, currentUser, getUserProfile, updateDetails, editProfile, checkout, addAddress, subscribe, contactUs } = require('../controllers/user.controllers');
+const { registeraccount, loginaccount, logoutaccount, forgotPassword, updatePassword, changePassword, currentUser, getUserProfile, updateDetails, editProfile, checkout, addAddress, subscribe, contactUs, loginWithGoogle, failureMessage } = require('../controllers/user.controllers');
 const { UserIsLoggedIn } = require('../middlewares/auth.middleware');
 const upload = require("../utils/multer");
 const router = express.Router();
+
 
 //register account
 // tested
@@ -16,6 +17,7 @@ router.post('/login', loginaccount);
 //google/login
 // tested
 router.post('/google/login', loginWithGoogle);
+
 
 //logout
 // tested
@@ -64,6 +66,7 @@ router.post("/subscribe",  subscribe)
 
 // /contacts/message
 router.post("/contacts/message", contactUs )
+
 
 
 module.exports = router;
