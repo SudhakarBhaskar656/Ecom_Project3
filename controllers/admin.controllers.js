@@ -229,7 +229,7 @@ exports.forgotPassword = async (req, res) => {
 //
 exports.updatePassword = async (req, res) => {
 
-    const { password, confirmPassword, token } = req.body;
+    const { password, confirmPassword, token } = req.body || req.query;
 
     try {
         // Check if passwords match

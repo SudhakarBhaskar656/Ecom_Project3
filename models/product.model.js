@@ -27,10 +27,10 @@ const productSchema = new Schema({
     category: {
         type: String,
         required: true,
-        enum: {
-            values: ['electronics', 'clothing', 'home', 'sports', 'kids', 'footwear', 'cosmetics', 'mens', 'womens'],
-            message: 'Category is not valid'
-        }
+        // enum: {
+        //     values: ['electronics', 'clothing', 'home', 'sports', 'kids', 'footwear', 'cosmetics', 'mens', 'womens'],
+        //     message: 'Category is not valid'
+        // }
     },
     stock: {
         type: Number,

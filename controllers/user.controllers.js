@@ -24,11 +24,16 @@ exports.registeraccount = async (req, res) => {
     try {
         const { username, email, password, isAdmin = false } = req.body;
 
+        if (!username || !email || !password) {
+            return res.status(400).json({ success: false, message: 'Please fill all the required fields' });
+        }
+
         if (await userModel.findOne({ email })) {
             return res.status(403).json({ success: false, message: 'User already registered' });
         }
-         
-        const hashedPassword = await bcrypt.hash(password, 10);
+
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
 
         const newUser = await userModel.create({ username, email, password: hashedPassword, isAdmin });
 
@@ -38,45 +43,17 @@ exports.registeraccount = async (req, res) => {
     }
 };
 
+
 // User login
 exports.loginaccount = async (req, res) => {
     try {
         const { email, password } = req.body;
-
-        if (!email || !password) {
-            return res.status(403).json({ success: false, message: 'Please fill the details' });
-        }
+        if (!email || !password) return res.status(403).json({ success: false, message: 'Please fill the details' });
 
         const user = await userModel.findOne({ email });
-        if (!user || !(await bcrypt.compare(password, user.password))) {
-            return res.status(400).json({ success: false, message: 'Invalid email or password' });
-        }
+        if (!user || !(await bcrypt.compare(password, user.password))) return res.status(400).json({ success: false, message: 'Invalid email or password' });
 
-        return sendToken(user, res);
-    } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
-    }
-};
-
-// Google login
-exports.loginWithGoogle = async (req, res) => {
-    try {
-        const { username, email } = req.body;
-
-        if (!username || !email) {
-            return res.status(403).json({ success: false, message: 'Username and email are required' });
-        }
-
-        let user = await userModel.findOne({ email });
-
-        if (!user) {
-            const hashedPassword = await bcrypt.hash('dummyPassword', 10);
-            user = await userModel.create({ username, email, password: hashedPassword, isAdmin: false });
-        } else if (user.username !== username) {
-            return res.status(403).json({ success: false, message: 'Username does not match the email' });
-        }
-
-        return sendToken(user, res);
+        sendToken(user, res);
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
@@ -138,12 +115,16 @@ exports.forgotPassword = async (req, res) => {
 // Update user password using reset token
 exports.updatePassword = async (req, res) => {
     try {
-        const { password, confirmPassword, token } = req.body;
+        const { password, confirmPassword, token } = req.body || req.query;
 
         if (!token) {
             return res.status(401).json({ success: false, message: 'Please provide a valid token' });
         }
 
+        if(! password || ! confirmPassword) {
+          return res.status(404).json({success:false, message : "Please provide password and Confirm Password..."})
+        }
+        
         if (password !== confirmPassword) {
             return res.status(400).json({ success: false, message: 'Passwords do not match.' });
         }
@@ -245,7 +226,12 @@ exports.getUserProfile = async (req, res) => {
         }
 
         if(! dob || !gender || !mobileNumber){
-            return res.status(400).json({success: false, message : "Please provide  details to update."})
+            return res.status(400).json({success: false, message : "Please provide all details to update."})
+        }
+
+        // Validate gender before updating
+        if (gender !== 'Male' && gender !== 'Female'  &&  gender !== 'Other') {
+            return res.status(400).json({ success: false, message: "Invalid gender. Please provide 'male' or 'female or other'." });
         }
 
         // Validate and update fields

@@ -477,8 +477,10 @@ exports.singleProduct = async (req, res, next) => {
 // update single product with id checking mode.
 exports.updateProduct = async (req, res) => {
   try {
-    const { name, description, price, category, stock, discount } = req.body;
-    const productId = req.params.productId || req.query.productId;
+    const { name, description, price, category, stock, discount} = req.body;
+    const productId =  req.query.productId;
+
+    if(! productId) return res.status(400).json({success: false, message : "Please provide ProductId for update the details"})
 
     // Validate required fields
     const requiredFields = { name, description, price, category, stock, discount };
@@ -546,17 +548,21 @@ exports.updateProduct = async (req, res) => {
 // /deleteProduct form id
 exports.deleteProduct = async (req, res, next) => {
     try {
-        // Extract product ID from request parameters
-        const productId = req.params.id;
+        // Extract product ID from request parameters in a more explicit way
+        const productId = req.query.id || req.body.id;
         
-        // Check if the product was found or not
-        if (! productId) {
-            return res.status(404).json({ success: false, message: "Product not found" });
+        // Validate if the product ID is provided
+        if (!productId) {
+            return res.status(400).json({ success: false, message: "Product ID is required" });
         }
 
-        // Delete the product by ID
-        const deletedProduct = await productModel.findByIdAndDelete(productId).exec();
+        // Attempt to delete the product by ID
+        const deletedProduct = await productModel.findByIdAndDelete(productId);
 
+        // Check if the product was successfully deleted
+        if (!deletedProduct) {
+            return res.status(404).json({ success: false, message: "Product not found" });
+        }
 
         // Send success response
         res.status(200).json({
@@ -565,6 +571,8 @@ exports.deleteProduct = async (req, res, next) => {
         });
 
     } catch (error) {
+        // Log the error for debugging purposes
+        console.error("Error deleting product:", error);
         res.status(500).json({ success: false, message: "Internal Server Error" });
     }
 };

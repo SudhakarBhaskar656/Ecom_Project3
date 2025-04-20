@@ -10,7 +10,7 @@ const cors = require("cors");
 const helmet = require("helmet");
 const passport = require("passport");
 const session = require("express-session");
-const path = require("path");
+
 
 
 // Import routes
@@ -21,8 +21,6 @@ const cartRoutes = require("./routes/cartRoutes");
 const wishlistRoutes = require("./routes/wishlistRoutes");
 const orderRoutes = require("./routes/orderRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
-const googleRoutes = require("./routes/googleRoutes")
-const homeRoute = require("./routes/home.Route")
 
 
 // Database connection
@@ -51,24 +49,21 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
-// view engine setup
-app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'ejs');
-
-
-//Google Authentication configuration 
-require("./config/google.auth")
 
 // Set up route prefixes
-app.use("/", homeRoute);
+app.get("/Ecommerce",  (req, res) => {
+    res.send("Welcome to the API")
+})
+
 app.use(`/Ecommerce/users/user`, usersRoutes);
 app.use("/Ecommerce/admins/admin", adminRoutes);
 app.use('/Ecommerce/products', productRoutes);
+
 app.use('/Ecommerce/users/user/cart', cartRoutes);
 app.use("/Ecommerce/user/wishlist", wishlistRoutes);
 app.use("/Ecommerce/order", orderRoutes);
 app.use("/Ecommerce/dashboard", dashboardRoutes);
-app.use("/Ecommerce", googleRoutes)
+
 
 
 // Catch-all route for unknown paths

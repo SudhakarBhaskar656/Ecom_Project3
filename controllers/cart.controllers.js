@@ -1,4 +1,4 @@
-const cartModel = require('../models/cart.model');
+const CartModel = require('../models/cart.model');
 const productModel = require('../models/product.model');
 const userModel = require('../models/user.model');
 const NodeCache = require("node-cache");
@@ -52,44 +52,41 @@ exports.addToCart = async (req, res, next) => {
 };
 
 
-// remove a particular product from the cart using productId
 exports.removeFromCart = async (req, res, next) => {
+  try {
+    const userId = req.user.userid;
+    const { productId } = req.body;
 
-    try {
-        const userId = req.user.userid; // Assuming user is authenticated and req.user.userid is available
-        const productId = req.query.productId || req.body.productId; // Extract productId from query string
-         
-        if (!productId) {
-            return res.status(400).json({ success: false, message: 'Product ID is required' });
-        }
-
-        // Validate the existence of the product
-        const product = await productModel.findById(productId);
-        if (!product) {
-            return res.status(404).json({ success: false, message: 'Product not found' });
-        }
-
-        // Remove the product from the user's mycart array
-        await userModel.findByIdAndUpdate(userId, { $pull: { mycart: productId } });
-
-        // Find the user's cart and remove the product from the cart items
-        const cart = await cartModel.findOne({ user: userId });
-        if (cart) {
-            // Filter out the item with the specified productId
-            cart.items = cart.items.filter(item => item.product.toString() !== productId);
-
-            // Save the updated cart or remove it if empty
-            if (cart.items.length === 0) {
-                await cart.remove(); // Remove cart if empty
-            } else {
-                await cart.save(); // Save updated cart
-            }
-        }
-
-        res.status(200).json({ success: true, message: 'Product removed from cart' });
-    } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
+    if (!productId) {
+      return res.status(400).json({ message: "Product ID is required." });
     }
+
+    const cart = await CartModel.findOne({ user: userId });
+
+    if (!cart) {
+      return res.status(404).json({ message: "Cart not found." });
+    }
+
+    const initialItemsLength = cart.items.length;
+
+    // Filter out the product from cart items
+    cart.items = cart.items.filter(item => item.product.toString() !== productId);
+
+    if (cart.items.length === initialItemsLength) {
+      return res.status(404).json({ message: "Product not found in cart." });
+    }
+
+    await cart.save();
+
+    return res.status(200).json({
+      message: "Product removed from cart successfully.",
+      cart: cart
+    });
+
+  } catch (error) {
+    console.error("Error removing product from cart:", error);
+    return res.status(500).json({ message: "Internal server error." });
+  }
 };
 
 

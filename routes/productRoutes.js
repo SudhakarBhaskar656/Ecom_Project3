@@ -17,11 +17,11 @@ router.get("/all", totalProducts);
 router.get("/product/:id", singleProduct);
 
 // /product/update/:id
-router.put("/product/update/:productId", [AdminIsLoggedIn, upload.array('images', 5)],  updateProduct);
+router.put("/product/update", [AdminIsLoggedIn, upload.array('images', 5)],  updateProduct);
 
 // /product/delete/:id
 // tested
-router.delete("/product/delete/:id",AdminIsLoggedIn, deleteProduct);
+router.delete("/product/delete",AdminIsLoggedIn, deleteProduct);
 
 ///category
 // tested

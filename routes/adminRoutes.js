@@ -12,10 +12,6 @@ router.post("/register",   adminRegister)
 // tested
 router.post("/login", adminLogin)
 
-// /google/login
-// tested 
-router.post("/google/login",  adminloginWithGoogle)
-
 //  /logout
 // tested 
 router.get("/logout",AdminIsLoggedIn, adminLogout)
@@ -26,7 +22,7 @@ router.post('/forgotpassword',  forgotPassword);
 
 // /updatepassword/:token
 // tested 
-router.put('/updatepassword/:token', updatePassword);
+router.put('/updatepassword', updatePassword);
 
 // /resetpassword
 // tested

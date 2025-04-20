@@ -14,11 +14,6 @@ router.post('/register', registeraccount);
 // tested 
 router.post('/login', loginaccount);
 
-//google/login
-// tested
-router.post('/google/login', loginWithGoogle);
-
-
 //logout
 // tested
 router.get("/logout", UserIsLoggedIn, logoutaccount)
