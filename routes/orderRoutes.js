@@ -23,14 +23,15 @@ router.get('/:orderId', UserIsLoggedIn, getOrderById);
 router.put('/update/:orderId/status', AdminIsLoggedIn, updateOrderStatus);
 
 
-// Cancel an order (for Admins)
-// /cancel/orderId
-router.put('/cancel/:orderId',AdminIsLoggedIn, cancelOrder);
-
-
 // Cancel an order (for Users)
 // /cancel/orderId
-router.put('/cancel/:orderId',UserIsLoggedIn, cancelOrder);
+router.put('/cancel',UserIsLoggedIn, cancelOrder);
+
+
+// Cancel an order (for Admins)
+// /cancel/orderId
+router.put('/cancel',AdminIsLoggedIn, cancelOrder);
+
 
 // /generate/:orderId
 router.get('/generate/:orderId', UserIsLoggedIn, generateInvoice);

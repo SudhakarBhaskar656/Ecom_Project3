@@ -54,11 +54,9 @@ app.use(passport.session());
 app.get("/Ecommerce",  (req, res) => {
     res.send("Welcome to the API")
 })
-
 app.use(`/Ecommerce/users/user`, usersRoutes);
 app.use("/Ecommerce/admins/admin", adminRoutes);
 app.use('/Ecommerce/products', productRoutes);
-
 app.use('/Ecommerce/users/user/cart', cartRoutes);
 app.use("/Ecommerce/user/wishlist", wishlistRoutes);
 app.use("/Ecommerce/order", orderRoutes);

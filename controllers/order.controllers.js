@@ -16,13 +16,30 @@ const myCache = new NodeCache({ stdTTL: 100, checkperiod: 120 });
 exports.createOrder = async (req, res) => {
     const session = await mongoose.startSession();
     session.startTransaction();
-    let paymentStatus; // Declare paymentStatus variable
+    let paymentStatus = 'pending'; // Initialize paymentStatus variable
+    let newOrder = null; // Initialize newOrder variable to avoid reference errors in catch block
     try {
         const { products, deliveryAddress, userEmail } = req.body;
 
         // Validate that products array exists and is not empty
         if (!products || products.length === 0) {
             return res.status(400).json({ message: "No products found in the order" });
+        }
+
+        // Validate product structure
+        for (const item of products) {
+            if (!item.product || !item.product._id || !item.quantity) {
+                return res.status(400).json({ 
+                    message: "Invalid product structure. Each product must have _id and quantity" 
+                });
+            }
+            
+            // Validate quantity is a positive number
+            if (item.quantity <= 0) {
+                return res.status(400).json({ 
+                    message: `Invalid quantity for product ${item.product._id}. Quantity must be positive.` 
+                });
+            }
         }
 
         const loginuser = await userModel.findOne({ email: req.user.email }).session(session);
@@ -33,6 +50,14 @@ exports.createOrder = async (req, res) => {
         // Validate that delivery address is provided
         if (!deliveryAddress) {
             return res.status(400).json({ message: "Delivery address is required" });
+        }
+
+        // Validate delivery address structure
+        const requiredAddressFields = ['addressLine1', 'city', 'state', 'postalCode', 'country', 'phoneNumber'];
+        for (const field of requiredAddressFields) {
+            if (!deliveryAddress[field]) {
+                return res.status(400).json({ message: `Delivery address ${field} is required` });
+            }
         }
 
         // Fetch product details from the database
@@ -78,7 +103,7 @@ exports.createOrder = async (req, res) => {
         });
 
         // Create a new order document with populated product details and Razorpay order ID
-        const newOrder = new Order({
+        newOrder = new Order({
             user: loginuser._id,
             products: populatedProducts,
             totalAmount: totalAmount,
@@ -125,9 +150,10 @@ exports.createOrder = async (req, res) => {
 
         await transporter.sendMail(mailOptions);
 
-        // Update payment status to 'paid' after successful transaction
-        paymentStatus = 'paid';
-        newOrder.paymentStatus = paymentStatus; // Update payment status in the order
+        // Note: Payment status should be updated after successful payment verification
+        // This is just a placeholder - actual payment verification should happen in a separate endpoint
+        // paymentStatus = 'paid';
+        // newOrder.paymentStatus = paymentStatus;
 
         // Respond with the newly created order details
         res.status(201).json({
@@ -141,11 +167,13 @@ exports.createOrder = async (req, res) => {
     } catch (error) {
         // Abort the transaction in case of an error
         await session.abortTransaction();
-        // Set payment status to 'failed' if an error occurs
-        if (paymentStatus !== 'paid') {
+        
+        // Set payment status to 'failed' if an error occurs and order was created
+        if (newOrder) {
             newOrder.paymentStatus = 'failed';
             await newOrder.save({ session });
         }
+        
         res.status(500).json({ message: 'Error creating order', error: error.message });
     } finally {
         session.endSession();
@@ -158,41 +186,33 @@ exports.getUserOrders = async (req, res) => {
     try {
         const userEmail = req.user.email;
 
-        // Create a cache key based on the user's email
-        const cacheKey = `orders_${userEmail}`;
-
-        // Check if orders data exists in the cache
-        const cachedOrders = myCache.get(cacheKey);
-        if (cachedOrders) {
-            return res.status(200).json({ message: 'User orders fetched successfully', orders: cachedOrders }); // Return cached response
-        }
-
         // Find the user by email
-        const loginuser = await userModel.findOne({ email: userEmail });
-        if (!loginuser) {
+        const user = await userModel.findOne({ email: userEmail });
+        if (!user) {
             return res.status(404).json({ message: "User not found" });
         }
 
         // Find the user's orders and populate the product details
-        const orders = await Order.find({ user: loginuser._id }).populate('products.product');
+        const orders = await Order.find({ user: user._id }).populate('products.product');
         if (orders.length === 0) {
             return res.status(404).json({ message: "No orders found" });
         }
 
-        // Store the orders in the cache
-        myCache.set(cacheKey, orders);
-
         // Send the response with the user's orders
         res.status(200).json({ message: 'User orders fetched successfully', orders });
     } catch (error) {
+        console.error('Error fetching user orders:', error);
         res.status(500).json({ message: 'Error fetching user orders', error: error.message });
     }
 };
 
 
+
 // Get a single order by order ID
 exports.getOrderById = async (req, res) => {
     try {
+        const orderId = req.query.orderId || req.params.orderId;
+        if(! orderId) return res.status(400).json({success : false, message : "Please provide Order Id"})
         const order = await Order.findById(req.params.orderId).populate('products.product');
         if (!order) {
             return res.status(404).json({ message: "Order not found" });
@@ -207,6 +227,9 @@ exports.getOrderById = async (req, res) => {
 // Update order status (for Admin)
 exports.updateOrderStatus = async (req, res) => {
     const { status, userEmail } = req.body; 
+    const orderId = req.params.orderId || req.query.orderId;
+    if(! orderId) return res.status(400).json({success : false, message : "Please provide Order Id"})
+
     const order = await Order.findById(req.params.orderId || req.query.orderId);
       
     if (!order) {
@@ -251,7 +274,10 @@ exports.updateOrderStatus = async (req, res) => {
 exports.cancelOrder = async (req, res) => {
     try {
         // Validate the order ID format
-        const orderId = req.params.orderId || req.query.orderId;
+        const orderId =  req.query.orderId;
+        if( ! orderId) return res.status(400).json({success : false, message : "Please provide OrderId"})
+
+            
         if (!mongoose.Types.ObjectId.isValid(orderId)) {
             return res.status(400).json({ message: "Invalid order ID format" });
         }
@@ -278,14 +304,21 @@ exports.cancelOrder = async (req, res) => {
         // Update the order status to 'cancelled' and save the reason
         order.status = 'cancelled';
         order.cancelReason = req.body.cancelReason;
+        
+        // Add to status history
+        order.statusHistory.push({
+            status: 'cancelled',
+            date: new Date()
+        });
+        
         await order.save();
         
-        // Remove the order from the Order model
-        await Order.findByIdAndDelete(orderId);
+        // Note: We're no longer deleting the order to maintain order history
+        // await Order.findByIdAndDelete(orderId);
       
-        // Update the user's orders array
-        loginuser.orders = loginuser.orders.filter(id => id.toString() !== orderId.toString());
-        await loginuser.save();
+        // Update the user's orders array - no need to remove the order ID
+        // loginuser.orders = loginuser.orders.filter(id => id.toString() !== orderId.toString());
+        // await loginuser.save();
 
         // Send email notification about the order cancellation
         const transporter = nodemailer.createTransport({
@@ -313,7 +346,7 @@ exports.cancelOrder = async (req, res) => {
         await transporter.sendMail(mailOptions);
 
         // Respond with success
-        res.status(200).json({ message: 'Order cancelled and removed successfully' });
+        res.status(200).json({ message: 'Order cancelled successfully', order });
 
     } catch (error) {
         res.status(500).json({ message: 'Error cancelling order', error: error.message });
@@ -433,3 +466,95 @@ exports.generateInvoice = async (req, res) => {
       res.status(500).json({ error: error.message });
     }
   };
+
+// Verify Razorpay payment
+exports.verifyPayment = async (req, res) => {
+    try {
+        const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+        
+        // Validate required parameters
+        if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+            return res.status(400).json({ 
+                message: "Missing required payment verification parameters" 
+            });
+        }
+        
+        // Find the order by Razorpay order ID
+        const order = await Order.findOne({ razorpayOrderId: razorpay_order_id });
+        if (!order) {
+            return res.status(404).json({ message: "Order not found" });
+        }
+        
+        // Verify the payment signature
+        const body = razorpay_order_id + "|" + razorpay_payment_id;
+        const expectedSignature = crypto
+            .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+            .update(body.toString())
+            .digest("hex");
+            
+        const isAuthentic = expectedSignature === razorpay_signature;
+        
+        if (isAuthentic) {
+            // Update order with payment details
+            order.paymentStatus = 'paid';
+            order.razorpayPaymentId = razorpay_payment_id;
+            order.status = 'processing'; // Update order status to processing
+            
+            // Add to status history
+            order.statusHistory.push({
+                status: 'processing',
+                date: new Date()
+            });
+            
+            await order.save();
+            
+            // Send payment confirmation email
+            const user = await User.findById(order.user);
+            if (user) {
+                const transporter = nodemailer.createTransport({
+                    service: 'gmail',
+                    auth: {
+                        user: process.env.EMAIL_USER,
+                        pass: process.env.EMAIL_PASS,
+                    },
+                });
+                
+                const mailOptions = {
+                    from: process.env.EMAIL_USER,
+                    to: user.email,
+                    subject: 'Payment Confirmation - Your Order Payment is Successful!',
+                    html: `
+                        <h1>Payment Confirmation</h1>
+                        <p>Dear Customer,</p>
+                        <p>Your payment for order #${order.orderNumber} has been successfully processed.</p>
+                        <p><strong>Payment ID:</strong> ${razorpay_payment_id}</p>
+                        <p><strong>Amount Paid:</strong> ₹${order.totalAmount}</p>
+                        <p>Your order is now being processed and will be shipped soon.</p>
+                        <p>Thank you for shopping with us!</p>
+                    `,
+                };
+                
+                await transporter.sendMail(mailOptions);
+            }
+            
+            return res.status(200).json({ 
+                message: "Payment verified successfully", 
+                order 
+            });
+        } else {
+            // Payment verification failed
+            order.paymentStatus = 'failed';
+            await order.save();
+            
+            return res.status(400).json({ 
+                message: "Payment verification failed" 
+            });
+        }
+    } catch (error) {
+        console.error("Payment verification error:", error);
+        return res.status(500).json({ 
+            message: "Error verifying payment", 
+            error: error.message 
+        });
+    }
+};
