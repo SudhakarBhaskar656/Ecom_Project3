@@ -26,6 +26,24 @@ const upload = multer({
   limits: { fileSize: 5 * 1024 * 1024 }, // Limit file size to 5MB
 });
 
-module.exports = upload;
+
+
+// Delete single image
+const deleteImage = async (publicId) => {
+  return await cloudinary.uploader.destroy(publicId);
+};
+
+// Delete multiple images
+const deleteImages = async (publicIds) => {
+  return await cloudinary.api.delete_resources(publicIds);
+};
+
+// Delete all images in a folder
+const deleteFolder = async (folderName) => {
+  await cloudinary.api.delete_resources_by_prefix(folderName);
+  return await cloudinary.api.delete_folder(folderName);
+};
+
+module.exports = {upload,deleteImage,deleteImages,deleteFolder}
 
 
